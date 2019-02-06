@@ -2,13 +2,19 @@
 <head>
 	<title>Chinese checkers!</title>
 	<style>
+		body {
+			background-color: #222;
+		}
 		#canvas {
+			display: block;
 			margin: 0 auto;
-			width: 800px;
+			margin-top: 60px;
+			border: 1px solid black;
 		}
 	</style>
 </head>
 <body>
 	<canvas id="canvas" width="800" height="800"></canvas>
+	<script src="board.js"></script>
 	<script src="app.js"></script>
 </body>
