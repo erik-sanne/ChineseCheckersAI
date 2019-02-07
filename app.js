@@ -3,6 +3,9 @@ var ctx;
 var board;
 var currentlySelected = null;
 
+var currentPlayer = 0;
+var currentPlayerCount = 3;
+
 var players = [
 	{
 		color: '#1F75FE',
@@ -25,8 +28,15 @@ function init() {
 
 	let canvas = document.getElementById('canvas');
 	canvas.addEventListener('click', function (e) { onBoardClicked(e); });
+	ctx = canvas.getContext('2d');
 
-	ctx = canvas.getContext("2d");
+	// TODO: Remove this! It's only temporary for testing..
+	document.addEventListener('keydown', function (e) {
+		if (e.keyCode == 13) {
+			nextPlayer();
+			drawCurrentBoardState(board);
+		}
+	})
 
 	board = createGameboard(canvas.height);
 	fillInInitialPlayerMarbles();
@@ -59,24 +69,28 @@ function onBoardClicked(e) {
 	}
 }
 
-function fillInInitialPlayerMarbles() {
+function nextPlayer() {
+	currentPlayer = (currentPlayer + 1) % currentPlayerCount;
+}
 
-	for (var i = 0; i < players.length; i++) {
+function fillInInitialPlayerMarbles() {
+	let count = Math.min(currentPlayerCount, players.length);
+	for (var i = 0; i < count; i++) {
 		let player = players[i];
 		for (holeIndex of player.startHoles) {
 			board.holes[holeIndex] = i + 1
 		}
 	}
-
 }
 
 function colorForPlayer(playerIndex) {
-	return players[playerIndex - 1].color;
+	return players[playerIndex].color;
 }
 
-function makeMarbleCirclePath(x, y, board) {
+function makeMarbleCirclePath(x, y, board, size) {
 	ctx.beginPath();
-	ctx.arc(x, y, board.holeSize, 0, Math.PI * 2.0, false);
+	let radius = (size) ? size : board.holeSize;
+	ctx.arc(x, y, radius, 0, Math.PI * 2.0, false);
 	ctx.closePath();
 }
 
@@ -86,6 +100,28 @@ function drawCurrentBoardState(board) {
 
 	let centerX = canvas.width / 2.0;
 	let centerY = canvas.height / 2.0;
+
+	// Draw current player indicator
+	let size = 50;
+	makeMarbleCirclePath(size, size, board, size);
+	ctx.fillStyle = colorForPlayer(currentPlayer);
+	ctx.fill();
+
+	// Draw the graph (as a nice grid in the background)
+	ctx.strokeStyle = "#999";
+	ctx.lineWidth = 2;
+	for (let i = 0; i < board.graph.length; i++) {
+		let p0 = board.holeLocations[i];
+		let connections =  board.graph[i];
+		for (let k = 0; k < connections.length; ++k) {
+			let p1 = board.holeLocations[connections[k]];
+			ctx.beginPath();
+			ctx.moveTo(p0.x + centerX, p0.y + centerY);
+			ctx.lineTo(p1.x + centerX, p1.y + centerY);
+			ctx.closePath();
+			ctx.stroke();
+		}
+	}
 
 	for (let i = 0; i < board.holeLocations.length; i++){
 
@@ -106,13 +142,14 @@ function drawCurrentBoardState(board) {
 		else {
 
 			// Marble for some player in this hole
-			let player = state;
+			let player = state - 1;
 			ctx.fillStyle = colorForPlayer(player);
 			makeMarbleCirclePath(x, y, board);
 			ctx.fill();
 
 		}
 
+		// Draw the currently selected hole
 		if (i == currentlySelected) {
 			makeMarbleCirclePath(x, y, board);
 			ctx.lineWidth = 4;

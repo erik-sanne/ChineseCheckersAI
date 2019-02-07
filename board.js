@@ -25,12 +25,36 @@ function createGameboard(boardHeight) {
 	}
 
 	let emptyHoles = new Array(holeLocations.length).fill(0);
+	let graph = makeGraph(holeLocations, step);
 
 	return {
 		holeLocations: holeLocations,
 		holeSize: holeSize,
-		holes: emptyHoles
+		holes: emptyHoles,
+		graph: graph
 	}
+}
+
+function makeGraph(locations, step) {
+	let graph = []
+
+	for (let i = 0; i < locations.length; ++i) {
+		let p0 = locations[i];
+		let iToK = [];
+		for (let k = 0; k < locations.length; ++k) {
+
+			let p1 = locations[k];
+			let dx = p1.x - p0.x;
+			let dy = p1.y - p0.y;
+			if (Math.abs(Math.sqrt(dx * dx + dy * dy) - step) <= 0.1) {
+				iToK.push(k);
+			}
+
+		}
+		graph.push(iToK);
+	}
+
+	return graph;
 }
 
 function distanceLowerThanThreshold(x1, y1, board, threshold){
