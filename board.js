@@ -40,16 +40,21 @@ function makeGraph(locations, step) {
 
 	for (let i = 0; i < locations.length; ++i) {
 		let p0 = locations[i];
-		let iToK = [];
+		let iToK = [-1, -1, -1, -1, -1, -1];
 		for (let k = 0; k < locations.length; ++k) {
-
 			let p1 = locations[k];
 			let dx = p1.x - p0.x;
 			let dy = p1.y - p0.y;
 			if (Math.abs(Math.sqrt(dx * dx + dy * dy) - step) <= 0.1) {
-				iToK.push(k);
-			}
 
+				// Quanize angles to slots
+				const deg30 = Math.PI / 6.0;
+				let angle = (Math.atan2(dy, dx) + Math.PI + deg30);
+				let quantized = Math.floor(angle / (2.0 * Math.PI) * 6);
+				let slot = (quantized == 6) ? 0 : quantized;
+				iToK[slot] = k;
+
+			}
 		}
 		graph.push(iToK);
 	}

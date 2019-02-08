@@ -2,6 +2,8 @@ var ctx;
 
 var board;
 var currentlySelected = null;
+var potentialTargets = [];
+var canRepeatAfterMoveToTarget = [];
 
 var currentPlayer = 0;
 var currentPlayerCount = 3;
@@ -30,17 +32,17 @@ function init() {
 	canvas.addEventListener('click', function (e) { onBoardClicked(e); });
 	ctx = canvas.getContext('2d');
 
-	// TODO: Remove this! It's only temporary for testing..
-	document.addEventListener('keydown', function (e) {
-		if (e.keyCode == 13) {
-			nextPlayer();
-			drawCurrentBoardState(board);
-		}
-	})
-
 	board = createGameboard(canvas.height);
 	fillInInitialPlayerMarbles();
 	drawCurrentBoardState(board);
+
+	// End turn by pressing space
+	document.addEventListener('keydown', function (e) {
+		if (e.keyCode == 32 /* space */) {
+			nextPlayer();
+			drawCurrentBoardState(board);
+		}
+	});
 
 }
 
@@ -61,11 +63,84 @@ function onBoardClicked(e) {
 		let dy = y - pos.y;
 
 		if (Math.sqrt(dx * dx + dy * dy) < board.holeSize) {
-			currentlySelected = i;
-			console.log(i)
-			drawCurrentBoardState(board);
+			selectHole(i);
 			return;
 		}
+	}
+}
+
+function selectHole(index) {
+	//console.log(index);
+
+	let ownerOfSelected = board.holes[index] - 1;
+
+	if (currentlySelected == index) {
+
+		// Unselecting currently selected
+		currentlySelected = null;
+
+	} else if (ownerOfSelected == currentPlayer) {
+
+		// Selecting first marble (must be owned by the current player)
+		currentlySelected = index;
+
+	} else {
+
+		let targetIndex = potentialTargets.indexOf(index);
+		if (targetIndex != -1) {
+
+			// Clocking on a valid target
+			let marble = board.holes[currentlySelected];
+			board.holes[currentlySelected] = 0;
+			board.holes[index] = marble;
+
+			// End turn or not?
+			if (!canRepeatAfterMoveToTarget[targetIndex]) {
+				nextPlayer();
+			}
+
+			currentlySelected = null;
+
+		}
+
+	}
+
+	calculatePotentialTargets(currentlySelected);
+	drawCurrentBoardState(board);
+}
+
+function calculatePotentialTargets(current) {
+
+	potentialTargets = [];
+	canRepeatAfterMoveToTarget = [];
+
+	if (current == null) {
+		return;
+	}
+
+	let neighbors = board.graph[current];
+	//console.log(neighbors);
+
+	for (var dir = 0; dir < neighbors.length; dir++) {
+
+		let neighbor = neighbors[dir];
+		let neighborHole = board.holes[neighbor]
+
+		// Empty hole besides current
+		if (neighborHole == 0) {
+			potentialTargets.push(neighbor);
+			canRepeatAfterMoveToTarget.push(false);
+		}
+
+		// Filled hole besides current, look if there is an empty one just beyond
+		else if (neighborHole > 0) {
+			let beyond = board.graph[neighbor][dir];
+			if (board.holes[beyond] == 0) {
+				potentialTargets.push(beyond);
+				canRepeatAfterMoveToTarget.push(true);
+			}
+		}
+
 	}
 }
 
@@ -114,6 +189,10 @@ function drawCurrentBoardState(board) {
 		let p0 = board.holeLocations[i];
 		let connections =  board.graph[i];
 		for (let k = 0; k < connections.length; ++k) {
+			if (connections[k] == -1) {
+				// -1 indicates no edge, so ignore it
+				continue;
+			}
 			let p1 = board.holeLocations[connections[k]];
 			ctx.beginPath();
 			ctx.moveTo(p0.x + centerX, p0.y + centerY);
@@ -153,7 +232,15 @@ function drawCurrentBoardState(board) {
 		if (i == currentlySelected) {
 			makeMarbleCirclePath(x, y, board);
 			ctx.lineWidth = 4;
-			ctx.strokeStyle = "#FF3F40";
+			ctx.strokeStyle = "#FFFF99";
+			ctx.stroke();
+		}
+
+		// Draw the potential targets
+		if (potentialTargets.indexOf(i) != -1) {
+			makeMarbleCirclePath(x, y, board);
+			ctx.lineWidth = 4;
+			ctx.strokeStyle = "#FFFFFF";
 			ctx.stroke();
 		}
 	}
