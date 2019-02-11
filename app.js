@@ -5,21 +5,24 @@ var currentlySelected = null;
 var potentialTargets = [];
 
 var currentPlayer = 0;
-var currentPlayerCount = 2;
+var currentPlayerCount = 3;
 
 var players = [
 	{
 		color: '#1F75FE',
+		name: 'Blue',
 		startHoles: [95, 96, 97, 98, 102, 103, 104, 107, 108, 110],
 		goalHoles: [9, 10, 11, 12, 22, 23, 24, 34, 35, 45]
 	},
 	{
 		color: '#29AB87',
+		name: 'Green',
 		startHoles: [109, 106, 105, 101, 100, 99, 94, 93, 92, 91],
 		goalHoles: [0, 1, 2, 3, 13, 14, 15, 25, 26, 36]
 	},
 	{
 		color: '#F8786D',
+		name: 'Red',
 		startHoles: [120, 119, 118, 117, 116, 115, 114, 113, 112, 111],
 		goalHoles: [81, 82, 83, 84, 85, 86, 87, 88, 89, 90]
 	}
@@ -34,14 +37,6 @@ function init() {
 	board = createGameboard(canvas.height);
 	fillInInitialPlayerMarbles();
 	drawCurrentBoardState(board);
-
-	// End turn by pressing space
-	document.addEventListener('keydown', function (e) {
-		if (e.keyCode == 32 /* space */) {
-			nextPlayer();
-			drawCurrentBoardState(board);
-		}
-	});
 
 }
 
@@ -88,12 +83,18 @@ function selectHole(index) {
 		let targetIndex = potentialTargets.indexOf(index);
 		if (targetIndex != -1) {
 
-			// Clocking on a valid target
+			// Clicking on a valid target
 			let marble = board.holes[currentlySelected];
 			board.holes[currentlySelected] = 0;
 			board.holes[index] = marble;
 
-			nextPlayer();
+			if (checkWinConditionForCurrentPlayer()) {
+				drawCurrentBoardState(board);
+				alert(players[currentPlayer].name + ' won!'); // TODO: Show in a more *golden* way
+			} else {
+				nextPlayer();
+			}
+
 			currentlySelected = null;
 
 		}
@@ -102,6 +103,22 @@ function selectHole(index) {
 
 	calculatePotentialTargets(currentlySelected);
 	drawCurrentBoardState(board);
+
+}
+
+function checkWinConditionForCurrentPlayer() {
+
+	let player = players[currentPlayer];
+	let playerMarble = currentPlayer + 1;
+
+	for (holeIndex of player.goalHoles) {
+		if (board.holes[holeIndex] != playerMarble) {
+			return false;
+		}
+	}
+
+	return true;
+
 }
 
 function calculatePotentialTargets(current) {
