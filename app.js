@@ -3,10 +3,9 @@ var ctx;
 var board;
 var currentlySelected = null;
 var potentialTargets = [];
-var canRepeatAfterMoveToTarget = [];
 
 var currentPlayer = 0;
-var currentPlayerCount = 3;
+var currentPlayerCount = 2;
 
 var players = [
 	{
@@ -94,11 +93,7 @@ function selectHole(index) {
 			board.holes[currentlySelected] = 0;
 			board.holes[index] = marble;
 
-			// End turn or not?
-			if (!canRepeatAfterMoveToTarget[targetIndex]) {
-				nextPlayer();
-			}
-
+			nextPlayer();
 			currentlySelected = null;
 
 		}
@@ -118,30 +113,47 @@ function calculatePotentialTargets(current) {
 		return;
 	}
 
-	let neighbors = board.graph[current];
-	//console.log(neighbors);
+	// Recursively add all potential targets that come from jumping over marbles
+	recursiveAddJumpTargets(current);
 
+	// If empty hole right next to current
+	let neighbors = board.graph[current];
 	for (var dir = 0; dir < neighbors.length; dir++) {
 
 		let neighbor = neighbors[dir];
-		let neighborHole = board.holes[neighbor]
+		let neighborHole = board.holes[neighbor];
 
 		// Empty hole besides current
-		if (neighborHole == 0) {
+		if (neighborHole == 0 && potentialTargets.indexOf(neighbor) == -1) {
 			potentialTargets.push(neighbor);
-			canRepeatAfterMoveToTarget.push(false);
 		}
 
+	}
+}
+
+function recursiveAddJumpTargets(reference) {
+
+	let neighbors = board.graph[reference];
+	for (var dir = 0; dir < neighbors.length; dir++) {
+
+		let neighbor = neighbors[dir];
+		let neighborHole = board.holes[neighbor];
+
 		// Filled hole besides current, look if there is an empty one just beyond
-		else if (neighborHole > 0) {
+		if (neighborHole > 0) {
 			let beyond = board.graph[neighbor][dir];
 			if (board.holes[beyond] == 0) {
-				potentialTargets.push(beyond);
-				canRepeatAfterMoveToTarget.push(true);
+
+				// If it hasn't been considered already...
+				if (potentialTargets.indexOf(beyond) == -1) {
+					potentialTargets.push(beyond);
+					recursiveAddJumpTargets(beyond);
+				}
 			}
 		}
 
 	}
+
 }
 
 function nextPlayer() {
