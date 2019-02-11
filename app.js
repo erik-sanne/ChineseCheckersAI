@@ -9,7 +9,7 @@ var currentPlayerCount = 3;
 
 var players = [
 	{
-		color: '#1F75FE',
+		color: '#3C7BE2',
 		name: 'Blue',
 		startHoles: [95, 96, 97, 98, 102, 103, 104, 107, 108, 110],
 		goalHoles: [9, 10, 11, 12, 22, 23, 24, 34, 35, 45]
@@ -255,6 +255,16 @@ function drawCurrentBoardState(board) {
 			makeMarbleCirclePath(x, y, board);
 			ctx.fill();
 
+		}
+
+		for (let j = 0; j < players.length; j++){
+			if (players[j].goalHoles.includes(i) && state == 0){
+				makeMarbleCirclePath(x, y, board, 4*board.holeSize/5);
+				ctx.strokeStyle = players[j].color;
+				ctx.lineWidth = 1;
+				ctx.stroke();
+				break;
+			}
 		}
 
 		// Draw the currently selected hole
