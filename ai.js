@@ -1,4 +1,5 @@
 let nodeCount = 0;
+let hasher;
 
 function constructStateTree(state, maxDepth){
 	nodeCount = 0; 
@@ -9,6 +10,10 @@ function constructStateTree(state, maxDepth){
 		moves : []
 	}
 
+	hasher = new Hasher(300000);
+	hasher.put(root.state);
+
+	//TODO: not return
 	return recConstructStateTree(root, 0, maxDepth);
 
 	//TODO: evaluate best branch
@@ -35,8 +40,11 @@ function recConstructStateTree(node, depth, maxDepth){
 					moves : []
 				};
 
-				node.children.push(recConstructStateTree(childNode, depth+1, maxDepth));
-				nodeCount++;
+				if (!hasher.contains(newState)){
+					hasher.put(newState);
+					node.children.push(recConstructStateTree(childNode, depth+1, maxDepth));
+					nodeCount++;
+				}
 			}
 		}
 	}
