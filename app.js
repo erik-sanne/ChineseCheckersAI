@@ -36,6 +36,9 @@ function init() {
 	fillInInitialPlayerMarbles();
 	drawCurrentBoardState(board);
 
+	let debugTree = constructStateTree(board.holes, 4);
+	console.log(debugTree);
+	console.log("Node count: "+ nodeCount);
 
 }
 
@@ -117,59 +120,6 @@ function checkWinConditionForCurrentPlayer() {
 	}
 
 	return true;
-
-}
-
-function calculatePotentialTargets(holes, current) {
-
-	targets = [];
-
-	if (current == null) {
-		return;
-	}
-
-	// Recursively add all potential targets that come from jumping over marbles
-	recursiveAddJumpTargets(current, holes, targets);
-
-	// If empty hole right next to current
-	let neighbors = graph[current];
-	for (var dir = 0; dir < neighbors.length; dir++) {
-
-		let neighbor = neighbors[dir];
-		let neighborHole = holes[neighbor];
-
-		// Empty hole besides current
-		if (neighborHole == 0 && targets.indexOf(neighbor) == -1) {
-			targets.push(neighbor);
-		}
-
-	}
-
-	return targets;
-}
-
-function recursiveAddJumpTargets(reference, holes, targets) {
-
-	let neighbors = graph[reference];
-	for (var dir = 0; dir < neighbors.length; dir++) {
-
-		let neighbor = neighbors[dir];
-		let neighborHole = holes[neighbor];
-
-		// Filled hole besides current, look if there is an empty one just beyond
-		if (neighborHole > 0) {
-			let beyond = graph[neighbor][dir];
-			if (holes[beyond] == 0) {
-
-				// If it hasn't been considered already...
-				if (targets.indexOf(beyond) == -1) {
-					targets.push(beyond);
-					recursiveAddJumpTargets(beyond, holes, targets);
-				}
-			}
-		}
-
-	}
 
 }
 
