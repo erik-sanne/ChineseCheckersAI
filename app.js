@@ -36,9 +36,28 @@ function init() {
 	fillInInitialPlayerMarbles();
 	drawCurrentBoardState(board);
 
-	let debugTree = constructStateTree(board.holes, 4);
+	let hasher = new Hasher(300000);
+	let debugTree = constructStateTree(board.holes, 4, hasher);
 	console.log(debugTree);
 	console.log("Node count: "+ nodeCount);
+
+	// NOTE: This is just some debug stuff for visualizing!
+	let current = debugTree;
+	document.addEventListener('keydown', function (e) {
+		if (e.keyCode == 32) {
+			board.holes = current.state;
+			drawCurrentBoardState(board);
+			let randomIndex = Math.floor(Math.random() * current.children.length);
+			let randomChild = current.children[randomIndex];
+			if (randomChild !== undefined) {
+				current = randomChild;
+			} else {
+				current = constructStateTree(board.holes, 2, hasher);
+				console.log('done');
+			}
+		}
+	});
+
 
 }
 

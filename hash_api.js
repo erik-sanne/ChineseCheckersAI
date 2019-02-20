@@ -6,8 +6,11 @@ function Hasher(size) {
 	if (size === undefined){
 		size = this.size;
 	}
-		
+
 	map = new Array(size).fill(undefined);
+	if (Object.seal) {
+		Object.seal(map);
+	}
 
 	function length() {
 		return length_;
@@ -22,11 +25,26 @@ function Hasher(size) {
 		for (let marble of state){
 			hashCode = 17 * hashCode + marble;
 			hashCode = hashCode & hashCode; //to 32-bit :OOOO
-		} 
+		}
 		return hashCode;
 	}
 
+	function arrayEquals(a, b) {
+		if (a.length !== b.length) {
+			return false;
+		}
+		for (var i = 0; i < a.length; i++) {
+			if (a[i] !== b[i]) {
+				return false;
+			}
+		}
+		return true;
+	}
+
 	this.put = function ( state ) {
+
+		//return;
+
 		let hashCode = hash(state);
 		let index = hashCode % map.length;
 		let maxRange = 100;
@@ -35,30 +53,35 @@ function Hasher(size) {
 			if (map[index] === undefined){
 				map[index] = state;
 				length_++;
-				return true;
+				return;
 			}
 
-			index++;				
+			index++;
 			maxRange--;
 		}
 
 		console.log("size:" +map.length);
 		console.log("filled:" + length());
 		console.assert(false);
-		return false;
+		return;
 	}
 
 	this.contains = function (state) {
+
+		//return false;
+
 		let hashCode = hash(state);
 		let index = hashCode % map.length;
 		let maxRange = 100;
-		
-		while (maxRange > 0){
-			if (map[index] === undefined)
-				return false;
 
-			if (map[index] === state)
+		while (maxRange > 0){
+			if (map[index] === undefined) {
+				return false;
+			}
+
+			if (arrayEquals(map[index], state)) {
 				return true;
+			}
 
 			index+=1;
 			maxRange--;
