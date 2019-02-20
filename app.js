@@ -32,6 +32,14 @@ function init() {
 	fillInInitialPlayerMarbles();
 	drawCurrentBoardState(board);
 
+	var iterationCount = 0;
+	do {
+		constructStateGraph(board);
+		iterationCount++;
+		console.log(iterationCount);
+	}
+	while(iterationCount < 3.53e+22);
+
 }
 
 function onBoardClicked(e) {
@@ -278,6 +286,22 @@ function drawCurrentBoardState(board) {
 		}
 	}
 
+}
+
+function constructStateGraph(board){
+	do {
+		var currentHole = Math.floor(Math.random()*121);
+	}
+	while(board.holes[currentHole] == 0);
+
+	calculatePotentialTargets(currentHole);
+
+	var nextMoveIndex = Math.floor(Math.random()*potentialTargets.length);
+	var nextMove = potentialTargets[nextMoveIndex];
+
+	let marble = board.holes[currentHole];
+	board.holes[nextMove] = marble;
+	board.holes[currentHole] = 0;
 }
 
 init();
