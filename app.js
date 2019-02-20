@@ -1,6 +1,8 @@
 var ctx;
 
 var board;
+var graph;
+
 var currentlySelected = null;
 var potentialTargets = [];
 
@@ -29,6 +31,8 @@ function init() {
 	ctx = canvas.getContext('2d');
 
 	board = createGameboard(canvas.height);
+	graph = board.graph;
+
 	fillInInitialPlayerMarbles();
 	drawCurrentBoardState(board);
 
@@ -72,7 +76,7 @@ function selectHole(index) {
 
 		// Selecting first marble (must be owned by the current player)
 		currentlySelected = index;
-		potentialTargets = calculatePotentialTargets(currentlySelected);
+		potentialTargets = calculatePotentialTargets(board.holes, currentlySelected);
 
 	} else {
 
@@ -116,7 +120,7 @@ function checkWinConditionForCurrentPlayer() {
 
 }
 
-function calculatePotentialTargets(current) {
+function calculatePotentialTargets(holes, current) {
 
 	targets = [];
 
@@ -125,14 +129,14 @@ function calculatePotentialTargets(current) {
 	}
 
 	// Recursively add all potential targets that come from jumping over marbles
-	recursiveAddJumpTargets(current, targets);
+	recursiveAddJumpTargets(current, holes, targets);
 
 	// If empty hole right next to current
-	let neighbors = board.graph[current];
+	let neighbors = graph[current];
 	for (var dir = 0; dir < neighbors.length; dir++) {
 
 		let neighbor = neighbors[dir];
-		let neighborHole = board.holes[neighbor];
+		let neighborHole = holes[neighbor];
 
 		// Empty hole besides current
 		if (neighborHole == 0 && targets.indexOf(neighbor) == -1) {
@@ -144,23 +148,23 @@ function calculatePotentialTargets(current) {
 	return targets;
 }
 
-function recursiveAddJumpTargets(reference, targets) {
+function recursiveAddJumpTargets(reference, holes, targets) {
 
-	let neighbors = board.graph[reference];
+	let neighbors = graph[reference];
 	for (var dir = 0; dir < neighbors.length; dir++) {
 
 		let neighbor = neighbors[dir];
-		let neighborHole = board.holes[neighbor];
+		let neighborHole = holes[neighbor];
 
 		// Filled hole besides current, look if there is an empty one just beyond
 		if (neighborHole > 0) {
-			let beyond = board.graph[neighbor][dir];
-			if (board.holes[beyond] == 0) {
+			let beyond = graph[neighbor][dir];
+			if (holes[beyond] == 0) {
 
 				// If it hasn't been considered already...
 				if (targets.indexOf(beyond) == -1) {
 					targets.push(beyond);
-					recursiveAddJumpTargets(beyond);
+					recursiveAddJumpTargets(beyond, holes, targets);
 				}
 			}
 		}
@@ -280,38 +284,6 @@ function drawCurrentBoardState(board) {
 		}
 	}
 
-}
-
-function constructStateTree(maxDepth){
-	let root_ = {
-		state : board.holes,
-		children : [],
-		moves : []
-	}
-
-	recConstructStateTree(root, 0, maxDepth);
-
-	//TODO: evaluate best branch
-}
-
-function recConstructStateTree(node, depth, maxDepth){
-
-	let player = (depth+1)% 2;
-
-	//Add all the players marbles
-	let marbles = [];
-	for(let i = 0; i < nodes.state.length; i++){
-		if(node.state[i] == player){
-			marbles.append(i);
-		}
-	}
-
-	let moves = [];
-	for(marbles find moves)
-
-	if(depth < maxDepth){
-		recConstructStateTree(...);
-	}
 }
 
 init();
