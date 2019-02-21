@@ -54,11 +54,14 @@ function recConstructStateTree(node, depth, maxDepth){
 
 function iterativelyConstructStateTree(root, maxDepth, hasher){
 
-	let stack = []
-	stack.push({node: root, depth: 0});
+	//let stack = []
+	//stack.push({node: root, depth: 0});
+	let queue = new FifoQueue();
+	queue.push({node: root, depth: 0});
 
-	while (stack.length != 0) {
-		let current = stack.shift();//stack.shift();
+	while (queue.length() != 0) {
+		//let current = stack.shift();//stack.shift();
+		let current = queue.pop();
 
 		if (current.depth >= maxDepth) {
 			continue;
@@ -86,8 +89,12 @@ function iterativelyConstructStateTree(root, maxDepth, hasher){
 						hasher.put(newState);
 						current.node.children.push(childNode);
 						nodeCount++;
-
+						/*
 						stack.push({
+							node: childNode,
+							depth: current.depth + 1
+						}); */
+						queue.push({
 							node: childNode,
 							depth: current.depth + 1
 						});
