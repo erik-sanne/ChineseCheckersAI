@@ -36,7 +36,7 @@ function init() {
 	fillInInitialPlayerMarbles();
 	drawCurrentBoardState(board);
 
-	let debugTree = constructStateTree(board.holes, 4);
+	let debugTree = constructStateTree(board.holes, 2);
 	console.log(debugTree);
 	console.log("Node count: "+ nodeCount);
 

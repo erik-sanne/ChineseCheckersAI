@@ -34,7 +34,8 @@ function Hasher(size) {
 		while (maxRange > 0){
 			if (map[index] === undefined){
 				map[index] = state;
-				length_++;
+				console.log(length_ + ": state was added with hash: " + hashCode + " at position " + index + " where original hash index was " + (hashCode % map.length));
+				length_++;	
 				return true;
 			}
 
