@@ -193,8 +193,6 @@ function performAImove() {
 	nextPlayer();
 	drawCurrentBoardState(board);
 
-	console.log(hasher.length());
-
 }
 
 function fillInInitialPlayerMarbles() {
