@@ -1,10 +1,13 @@
 'use strict';
+var STEP = undefined;
 
 function createGameboard(boardHeight) {
 
 	const approxNumHolesInHeight = 15;
 	const step = boardHeight / approxNumHolesInHeight;
 	const holeSize = 0.85 * 0.5 * step;
+
+	STEP = step;
 
 	let t1 = createTriangle(step);
 	let t2 = createTriangle(step);

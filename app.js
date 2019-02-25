@@ -9,22 +9,29 @@ var potentialTargets = [];
 var currentPlayer = 0;
 var currentPlayerCount = 2;
 
-let hasher = new HashMap(10000000);
-
 var players = [
 	{
 		color: '#3C7BE2',
 		name: 'Blue',
-		startHoles: [81, 82, 83, 84, 85, 86, 87, 88, 89, 90],
+		//startHoles: [81, 82, 83, 84, 85, 86, 87, 88, 89, 90],
+		startHoles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
 		goalHoles: [120, 119, 118, 117, 116, 115, 114, 113, 112, 111]
 	},
 	{
 		color: '#F8786D',
 		name: 'Red',
-		startHoles: [120, 119, 118, 117, 116, 115, 114, 113, 112, 111],
+		//startHoles: [120, 119, 118, 117, 116, 115, 114, 113, 112, 111],
+		startHoles: [77, 82, 83, 78, 85, 86, 87, 88, 89, 90], //Debug
 		goalHoles: [81, 82, 83, 84, 85, 86, 87, 88, 89, 90]
 	}
 ]
+
+const HUMAN = 0;
+const NELLY = 1;
+
+const HUMAN_MARBLE = 1;
+const NELLY_MARBLE = 2;
+
 
 function init() {
 
@@ -119,6 +126,7 @@ function selectHole(index) {
 
 		// Unselecting currently selected
 		currentlySelected = null;
+		potentialTargets = [];
 
 	} else if (ownerOfSelected == currentPlayer) {
 
@@ -132,25 +140,36 @@ function selectHole(index) {
 		if (targetIndex != -1) {
 
 			// Clicking on a valid target
-			let marble = board.holes[currentlySelected];
-			board.holes[currentlySelected] = 0;
-			board.holes[index] = marble;
-
-			if (checkWinConditionForCurrentPlayer(board.holes)) {
-				drawCurrentBoardState(board);
-				alert(players[currentPlayer].name + ' won!'); // TODO: Show in a more *golden* way
-			} else {
-				nextPlayer();
-			}
+			moveMarble(currentlySelected, index);
 
 			currentlySelected = null;
 			potentialTargets = [];
 		}
 
 	}
-
 	drawCurrentBoardState(board);
+}
 
+function moveMarble(src, dest){
+	let marble = board.holes[src];
+	board.holes[src] = 0;
+	board.holes[dest] = marble;
+	onMarbleMoved();
+}
+
+function onMarbleMoved(){
+	if (checkWinConditionForCurrentPlayer(board.holes)) {
+		drawCurrentBoardState(board);
+		let msg = "Nelly says: Argh...! Rematch?";
+		if (currentPlayer == NELLY)
+			msg = "Nelly says: I won! :D";
+		alert(msg);
+
+		//alert(players[currentPlayer].name + ' won!'); // TODO: Show in a more *golden* way
+		return;
+	}
+
+	nextPlayer();
 }
 
 function checkWinConditionForCurrentPlayer(holes) {
@@ -171,28 +190,21 @@ function checkWinConditionForCurrentPlayer(holes) {
 function nextPlayer() {
 	currentPlayer = (currentPlayer + 1) % currentPlayerCount;
 
-	// i.e. AI player
-	if (currentPlayer == 1) {
+	if (currentPlayer == NELLY) {
 		setTimeout(function() {
 			performAImove();
 		}, 100);
-
 	}
 }
 
 function performAImove() {
 
-	let treeRoot = constructStateTree(board, 3, hasher);
+	let treeRoot = constructStateTree(board, 3);
 	let move = treeRoot.optimalMove;
 
-	let marble = board.holes[move.src];
-	board.holes[move.src] = 0;
-	board.holes[move.dest] = marble;
+	moveMarble(move.src, move.dest);
 
-	nextPlayer();
 	drawCurrentBoardState(board);
-
-	console.log(hasher.length());
 
 }
 
