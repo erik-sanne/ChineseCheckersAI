@@ -16,8 +16,7 @@ var players = [
 		color: '#3C7BE2',
 		name: 'Blue',
 		startHoles: [81, 82, 83, 84, 85, 86, 87, 88, 89, 90],
-		goalHoles: [120, 119, 118, 117, 116, 115, 114, 113, 112, 111],
-		targetPosition: { x: 5.231829784224841e-13, y: -369.5041722813603 }
+		goalHoles: [120, 119, 118, 117, 116, 115, 114, 113, 112, 111]
 	},
 	{
 		color: '#F8786D',
@@ -137,7 +136,7 @@ function selectHole(index) {
 			board.holes[currentlySelected] = 0;
 			board.holes[index] = marble;
 
-			if (checkWinConditionForCurrentPlayer()) {
+			if (checkWinConditionForCurrentPlayer(board.holes)) {
 				drawCurrentBoardState(board);
 				alert(players[currentPlayer].name + ' won!'); // TODO: Show in a more *golden* way
 			} else {
@@ -154,13 +153,13 @@ function selectHole(index) {
 
 }
 
-function checkWinConditionForCurrentPlayer() {
+function checkWinConditionForCurrentPlayer(holes) {
 
 	let player = players[currentPlayer];
 	let playerMarble = currentPlayer + 1;
 
 	for (holeIndex of player.goalHoles) {
-		if (board.holes[holeIndex] != playerMarble) {
+		if (holes[holeIndex] != playerMarble) {
 			return false;
 		}
 	}

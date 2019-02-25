@@ -30,6 +30,17 @@ function iterativelyConstructStateTree(root, maxDepth, hasher){
 			continue;
 		}
 
+		let winState = true;
+		for (let i of [81, 82, 83, 84, 85, 86, 87, 88, 89, 90]) {
+			if (current.node.state[i] !== 2) {
+				winState = false;
+			}
+		}
+		if (winState) {
+			console.log('found win state at depth: '+current.depth);
+			continue;
+		}
+
 		let playerIndex = (current.depth + 1) % 2;
 		let player = playerIndex + 1;
 
@@ -125,6 +136,9 @@ function recAssignScoresToNodes(current, holeLocations, depth) {
 	if (current.children.length == 0) {
 		current.score = evaluateState(current.state, holeLocations, targetIndex);
 	} else {
+
+		//if (maximize)
+		//	optScore = evaluateState(current.state, holeLocations, targetIndex);
 
 		for (var i = 0; i < current.children.length; i++) {
 			let child = current.children[i];
