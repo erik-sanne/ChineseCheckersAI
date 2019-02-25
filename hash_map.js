@@ -1,10 +1,12 @@
-function Hasher(size) {
+
+function HashMap(size) {
+
 	const maxRange = 30;
 	const stdSize = 300000;
 	let length_ = 0;
 
 	if (size === undefined){
-		size = this.size;
+		size = this.stdSize;
 	}
 
 	map = new Array(size).fill(undefined);
@@ -12,7 +14,7 @@ function Hasher(size) {
 		Object.seal(map);
 	}
 
-	function length() {
+	this.length = function() {
 		return length_;
 	}
 
@@ -43,17 +45,17 @@ function Hasher(size) {
 
 	this.put = function ( state ) {
 
-		//return;
+		return;
 
 		let hashCode = hash(state);
 		let index = hashCode % map.length;
-		let maxRange = 100;
+		let maxRange = 10;
 
 		while (maxRange > 0){
 			if (map[index] === undefined){
 				map[index] = state;
 				//console.log(length_ + ": state was added with hash: " + hashCode + " at position " + index + " where original hash index was " + (hashCode % map.length));
-				length_++;	
+				length_++;
 				return true;
 			}
 
@@ -69,11 +71,11 @@ function Hasher(size) {
 
 	this.contains = function (state) {
 
-		//return false;
+		return false;
 
 		let hashCode = hash(state);
 		let index = hashCode % map.length;
-		let maxRange = 100;
+		let maxRange = 10;
 
 		while (maxRange > 0){
 			if (map[index] === undefined) {

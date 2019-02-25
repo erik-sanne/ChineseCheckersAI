@@ -9,12 +9,15 @@ var potentialTargets = [];
 var currentPlayer = 0;
 var currentPlayerCount = 2;
 
+let hasher = new HashMap(10000000);
+
 var players = [
 	{
 		color: '#3C7BE2',
 		name: 'Blue',
 		startHoles: [81, 82, 83, 84, 85, 86, 87, 88, 89, 90],
-		goalHoles: [120, 119, 118, 117, 116, 115, 114, 113, 112, 111]
+		goalHoles: [120, 119, 118, 117, 116, 115, 114, 113, 112, 111],
+		targetPosition: { x: 5.231829784224841e-13, y: -369.5041722813603 }
 	},
 	{
 		color: '#F8786D',
@@ -36,11 +39,33 @@ function init() {
 	fillInInitialPlayerMarbles();
 	drawCurrentBoardState(board);
 
-	let hasher = new Hasher(300000);
-	let debugTree = constructStateTree(board.holes, 4, hasher);
-	console.log(debugTree);
-	console.log("Node count: "+ nodeCount);
+	//let val = evaluateState(board.holes, board.holeLocations, [120, 90]);
+	//console.log(val);
 
+	//let hasher = new HashMap(1000000);
+	//let debugTree = constructStateTree(board, 4, hasher);
+	//console.log(debugTree);
+	//console.log("Node count: " + nodeCount);
+	//console.log("Root score: " + debugTree.score);
+/*
+	document.addEventListener('keydown', function (e) {
+		if (e.keyCode == 32 && currentPlayer == 1) {
+
+			let hasher = new HashMap(1000000);
+			let treeRoot = constructStateTree(board, 4, hasher);
+			let move = treeRoot.optimalMove;
+
+			let marble = board.holes[move.src];
+			board.holes[move.src] = 0;
+			board.holes[move.dest] = marble;
+
+			nextPlayer();
+			drawCurrentBoardState(board);
+
+		}
+	});
+*/
+/*
 	// NOTE: This is just some debug stuff for visualizing!
 	let current = debugTree;
 	document.addEventListener('keydown', function (e) {
@@ -52,12 +77,12 @@ function init() {
 			if (randomChild !== undefined) {
 				current = randomChild;
 			} else {
-				current = constructStateTree(board.holes, 2, hasher);
+				current = constructStateTree(board, 2, hasher);
 				console.log('done');
 			}
 		}
 	});
-
+*/
 
 }
 
@@ -85,7 +110,9 @@ function onBoardClicked(e) {
 }
 
 function selectHole(index) {
+
 	//console.log(index);
+	//console.log(board.holeLocations[index]);
 
 	let ownerOfSelected = board.holes[index] - 1;
 
@@ -144,6 +171,30 @@ function checkWinConditionForCurrentPlayer() {
 
 function nextPlayer() {
 	currentPlayer = (currentPlayer + 1) % currentPlayerCount;
+
+	// i.e. AI player
+	if (currentPlayer == 1) {
+		setTimeout(function() {
+			performAImove();
+		}, 100);
+
+	}
+}
+
+function performAImove() {
+
+	let treeRoot = constructStateTree(board, 3, hasher);
+	let move = treeRoot.optimalMove;
+
+	let marble = board.holes[move.src];
+	board.holes[move.src] = 0;
+	board.holes[move.dest] = marble;
+
+	nextPlayer();
+	drawCurrentBoardState(board);
+
+	console.log(hasher.length());
+
 }
 
 function fillInInitialPlayerMarbles() {
