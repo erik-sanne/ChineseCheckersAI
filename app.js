@@ -119,6 +119,7 @@ function selectHole(index) {
 
 		// Unselecting currently selected
 		currentlySelected = null;
+		potentialTargets = [];
 
 	} else if (ownerOfSelected == currentPlayer) {
 
