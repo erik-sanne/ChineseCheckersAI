@@ -13,15 +13,15 @@ var players = [
 	{
 		color: '#3C7BE2',
 		name: 'Blue',
-		//startHoles: [81, 82, 83, 84, 85, 86, 87, 88, 89, 90],
-		startHoles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+		startHoles: [81, 82, 83, 84, 85, 86, 87, 88, 89, 90],
+		//startHoles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
 		goalHoles: [120, 119, 118, 117, 116, 115, 114, 113, 112, 111]
 	},
 	{
 		color: '#F8786D',
 		name: 'Red',
-		//startHoles: [120, 119, 118, 117, 116, 115, 114, 113, 112, 111],
-		startHoles: [77, 82, 83, 78, 85, 86, 87, 88, 89, 90], //Debug
+		startHoles: [120, 119, 118, 117, 116, 115, 114, 113, 112, 111],
+		//startHoles: [77, 82, 83, 78, 85, 86, 87, 88, 89, 90], //Debug
 		goalHoles: [81, 82, 83, 84, 85, 86, 87, 88, 89, 90]
 	}
 ]
@@ -31,6 +31,8 @@ const NELLY = 1;
 
 const HUMAN_MARBLE = 1;
 const NELLY_MARBLE = 2;
+
+const ONLYAI = 0;
 
 
 function init() {
@@ -194,12 +196,16 @@ function nextPlayer() {
 		setTimeout(function() {
 			performAImove();
 		}, 100);
+	} else if (ONLYAI) {
+		setTimeout(function() {
+			performAImove();
+		}, 100);
 	}
 }
 
 function performAImove() {
 
-	let treeRoot = constructStateTree(board, 3);
+	let treeRoot = constructStateTree(board, 3, currentPlayer);
 	let move = treeRoot.optimalMove;
 
 	moveMarble(move.src, move.dest);

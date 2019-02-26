@@ -1,6 +1,6 @@
 let nodeCount = 0;
 
-function constructStateTree(board, maxDepth){
+function constructStateTree(board, maxDepth, player){
 	nodeCount = 0;
 
 	let root = {
@@ -11,13 +11,13 @@ function constructStateTree(board, maxDepth){
 		optimalMove : undefined
 	}
 
-	let tree = iterativelyConstructStateTree(root, maxDepth);
-	assignScoresToNodes(root, board.holeLocations);
+	let tree = iterativelyConstructStateTree(root, maxDepth, player);
+	assignScoresToNodes(root, board.holeLocations, player);
 
 	return tree;
 }
 
-function iterativelyConstructStateTree(root, maxDepth){
+function iterativelyConstructStateTree(root, maxDepth, playerX){
 
 	let queue = new FifoQueue();
 	queue.push({node: root, depth: 0});
@@ -40,8 +40,8 @@ function iterativelyConstructStateTree(root, maxDepth){
 			console.log('found win state at depth: '+current.depth);
 			continue;
 		} */
-
-		let playerIndex = (current.depth + 1) % 2;
+		
+		let playerIndex = (current.depth + playerX) % 2;
 		let player = playerIndex + 1;
 
 		for(let i = 0; i < current.node.state.length; i++){
@@ -79,7 +79,7 @@ function iterativelyConstructStateTree(root, maxDepth){
 }
 
 // Players:
-//  index 0 = MIN = human
+//  index 0 = MIN = human <-- why can index be other values then?
 //  index 1 = MAX = computer
 // this function gives a score for the given state
 function evaluateState(state, holeLocations, targetIndex) {
@@ -90,7 +90,7 @@ function evaluateState(state, holeLocations, targetIndex) {
 
 		let marble = state[i];
 		let index = marble - 1;
-
+		
 		if (index != 0 && index != 1) {
 			continue;
 		}
@@ -121,26 +121,27 @@ function evaluateState(state, holeLocations, targetIndex) {
 
 	// (player 1 i.e. computer is MAX)
 	//return scores[1] - scores[0];
-	return scores[0] - scores[1]; // TODO: What is correct??!
-
+	return scores[0] - scores[1]; // Correct, score = dist, want as low dist as possible.
+								// When maximizing we want larger dist for player 1 to lower score
+	
 }
 
-function assignScoresToNodes(root, holeLocations) {
-	recAssignScoresToNodes(root, holeLocations, 0);
+function assignScoresToNodes(root, holeLocations, player) {
+	recAssignScoresToNodes(root, holeLocations, 0, player);
 }
 
-function recAssignScoresToNodes(current, holeLocations, depth) {
+function recAssignScoresToNodes(current, holeLocations, depth, player) {
 
 	// TODO: Maybe don't hardcode!
 	const targetIndex = [120, 90];
 
-	let maximize = (depth % 2) == 0;
+	let maximize = ((depth + player + 1) % 2) == 0;
 
 	let optScore = (maximize) ? Number.NEGATIVE_INFINITY : Number.POSITIVE_INFINITY;
 	let optMove = undefined;
 
 	if (current.children.length == 0) {
-		current.score = evaluateState(current.state, holeLocations, targetIndex);
+		current.score = evaluateState(current.state, holeLocations, targetIndex, player);
 	} else {
 		/*
 		if (maximize){
