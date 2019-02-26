@@ -32,7 +32,7 @@ const NELLY = 1;
 const HUMAN_MARBLE = 1;
 const NELLY_MARBLE = 2;
 
-const ONLYAI = 0;
+const ONLYAI = 1;
 
 
 function init() {

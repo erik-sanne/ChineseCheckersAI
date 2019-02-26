@@ -117,8 +117,14 @@ function evaluateState(state, holeLocations, targetIndex) {
 
 		scores[index] += dist;
 
+		for (let j = 0; j < 10; j++) {
+			if (state[targetIndex[index]-j] == marble) {
+				scores[index] -= 100;
+			}
+		}
 	}
 
+	
 	// (player 1 i.e. computer is MAX)
 	//return scores[1] - scores[0];
 	return scores[0] - scores[1]; // Correct, score = dist, want as low dist as possible.
