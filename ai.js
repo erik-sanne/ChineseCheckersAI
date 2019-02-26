@@ -28,7 +28,7 @@ function iterativelyConstructStateTree(root, maxDepth){
 		if (current.depth >= maxDepth) {
 			continue;
 		}
-/*
+
 		let winState = true;
 		for (let i of [81, 82, 83, 84, 85, 86, 87, 88, 89, 90]) {
 			if (current.node.state[i] !== 2) {
@@ -39,7 +39,7 @@ function iterativelyConstructStateTree(root, maxDepth){
 		if (winState) {
 			console.log('found win state at depth: '+current.depth);
 			continue;
-		} */
+		}
 
 		let playerIndex = (current.depth + 1) % 2;
 		let player = playerIndex + 1;
@@ -104,7 +104,7 @@ function evaluateState(state, holeLocations, targetIndex) {
 		//If on row 5 or less, base score only on y
 		/*
 		let abs_dy = Math.abs(dy);
-		let threshold = (Math.sqrt(3)/2) * STEP; 
+		let threshold = (Math.sqrt(3)/2) * STEP;
 		if (abs_dy <= threshold){
 			scores[index] += abs_dy;
 			continue;
@@ -116,6 +116,10 @@ function evaluateState(state, holeLocations, targetIndex) {
 		let dist = Math.sqrt(dx * dx + dy * dy);
 
 		scores[index] += dist;
+
+		if ([81, 82, 83, 84, 85, 86, 87, 88, 89, 90].includes(i)) {
+			scores[index] -= 100;
+		}
 
 	}
 
@@ -142,11 +146,10 @@ function recAssignScoresToNodes(current, holeLocations, depth) {
 	if (current.children.length == 0) {
 		current.score = evaluateState(current.state, holeLocations, targetIndex);
 	} else {
-		/*
-		if (maximize){
+
+		if (depth > 0) {
 			optScore = evaluateState(current.state, holeLocations, targetIndex);
 		}
-		*/
 
 		for (var i = 0; i < current.children.length; i++) {
 			let child = current.children[i];
