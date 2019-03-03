@@ -78,9 +78,6 @@ function iterativelyConstructStateTree(root, maxDepth){
 
 }
 
-// Players:
-//  index 0 = MIN = human
-//  index 1 = MAX = computer
 // this function gives a score for the given state
 function evaluateState(state, holeLocations, targetIndex) {
 
@@ -101,16 +98,6 @@ function evaluateState(state, holeLocations, targetIndex) {
 		let dx = loc.x - targetLoc.x;
 		let dy = loc.y - targetLoc.y;
 
-		//If on row 5 or less, base score only on y
-		/*
-		let abs_dy = Math.abs(dy);
-		let threshold = (Math.sqrt(3)/2) * STEP;
-		if (abs_dy <= threshold){
-			scores[index] += abs_dy;
-			continue;
-		}
-		*/
-
 		// TODO: If i is a hole that actually is a goal-hole, then the distance should maybe
 		// be clamped down to zero, maybe..? Or something similar so we don't "punish" "valid" holes
 		let dist = Math.sqrt(dx * dx + dy * dy);
@@ -122,11 +109,8 @@ function evaluateState(state, holeLocations, targetIndex) {
 		}
 
 	}
-
-	// (player 1 i.e. computer is MAX)
-	//return scores[1] - scores[0];
-	return scores[0] - scores[1]; // TODO: What is correct??!
-
+	
+	return scores[HUMAN] - scores[NELLY];
 }
 
 function assignScoresToNodes(root, holeLocations) {
@@ -147,6 +131,9 @@ function recAssignScoresToNodes(current, holeLocations, depth) {
 		current.score = evaluateState(current.state, holeLocations, targetIndex);
 	} else {
 
+		// This is needed if all possible future moves makes the state worse, i.e when enetring the last gole hole with only one move...
+		// However, I have a suspicion that it might not allways risk pervent if all future is worse than one move. So I would like to check
+		// depth > 1 instead to always account for opponent moves, but for some reason we again get problems at end game... Please check into this :) 
 		if (depth > 0) {
 			optScore = evaluateState(current.state, holeLocations, targetIndex);
 		}
@@ -166,7 +153,6 @@ function recAssignScoresToNodes(current, holeLocations, depth) {
 
 		current.score = optScore;
 		current.optimalMove = optMove;
-
 	}
 
 }

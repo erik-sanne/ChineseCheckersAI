@@ -44,59 +44,13 @@ function init() {
 
 	fillInInitialPlayerMarbles();
 	drawCurrentBoardState(board);
-
-	//let val = evaluateState(board.holes, board.holeLocations, [120, 90]);
-	//console.log(val);
-
-	//let hasher = new HashMap(1000000);
-	//let debugTree = constructStateTree(board, 4, hasher);
-	//console.log(debugTree);
-	//console.log("Node count: " + nodeCount);
-	//console.log("Root score: " + debugTree.score);
-/*
-	document.addEventListener('keydown', function (e) {
-		if (e.keyCode == 32 && currentPlayer == 1) {
-
-			let hasher = new HashMap(1000000);
-			let treeRoot = constructStateTree(board, 4, hasher);
-			let move = treeRoot.optimalMove;
-
-			let marble = board.holes[move.src];
-			board.holes[move.src] = 0;
-			board.holes[move.dest] = marble;
-
-			nextPlayer();
-			drawCurrentBoardState(board);
-
-		}
-	});
-*/
-/*
-	// NOTE: This is just some debug stuff for visualizing!
-	let current = debugTree;
-	document.addEventListener('keydown', function (e) {
-		if (e.keyCode == 32) {
-			board.holes = current.state;
-			drawCurrentBoardState(board);
-			let randomIndex = Math.floor(Math.random() * current.children.length);
-			let randomChild = current.children[randomIndex];
-			if (randomChild !== undefined) {
-				current = randomChild;
-			} else {
-				current = constructStateTree(board, 2, hasher);
-				console.log('done');
-			}
-		}
-	});
-*/
-
 }
 
 function onBoardClicked(e) {
 
 	var rect = e.target.getBoundingClientRect();
-  var x = e.clientX - rect.left;
-  var y = e.clientY - rect.top;
+  	var x = e.clientX - rect.left;
+  	var y = e.clientY - rect.top;
 
 	// TODO: Fix this thing.. It's because of the centering we currently have with the board.
 	x -= canvas.width / 2.0;
@@ -160,12 +114,12 @@ function moveMarble(src, dest){
 function onMarbleMoved(){
 	if (checkWinConditionForCurrentPlayer(board.holes)) {
 		drawCurrentBoardState(board);
-		let msg = "Nelly says: Argh...! Rematch?";
+		//TODO: Gold plate!
+		let msg = "Nelly says: Argh...! You won. >:(";
 		if (currentPlayer == NELLY)
 			msg = "Nelly says: I won! :D";
 		alert(msg);
 
-		//alert(players[currentPlayer].name + ' won!'); // TODO: Show in a more *golden* way
 		return;
 	}
 
