@@ -114,11 +114,14 @@ function moveMarble(src, dest){
 function onMarbleMoved(){
 	if (checkWinConditionForCurrentPlayer(board.holes)) {
 		drawCurrentBoardState(board);
-		//TODO: Gold plate!
 		let msg = "Nelly says: Argh...! You won. >:(";
 		if (currentPlayer == NELLY)
 			msg = "Nelly says: I won! :D";
-		alert(msg);
+		msg+="\nRematch?";
+		let rematch = confirm(msg);
+
+		if (rematch)
+			location.reload();
 
 		return;
 	}
