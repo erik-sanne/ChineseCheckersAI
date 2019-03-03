@@ -31,7 +31,7 @@ function iterativelyConstructStateTree(root, maxDepth){
 
 		let winState = true;
 		for (let i of [81, 82, 83, 84, 85, 86, 87, 88, 89, 90]) {
-			if (current.node.state[i] !== 2) {
+			if (current.node.state[i] !== NELLY_MARBLE) {
 				winState = false;
 			}
 		}

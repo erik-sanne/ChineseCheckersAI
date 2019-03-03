@@ -114,9 +114,9 @@ function moveMarble(src, dest){
 function onMarbleMoved(){
 	if (checkWinConditionForCurrentPlayer(board.holes)) {
 		drawCurrentBoardState(board);
-		let msg = "Nelly says: Argh...! You won. >:(";
+		let msg = "Congratulations, you won!";
 		if (currentPlayer == NELLY)
-			msg = "Nelly says: I won! :D";
+			msg = "You lost!";
 		msg+="\nRematch?";
 		let rematch = confirm(msg);
 
@@ -155,10 +155,13 @@ function nextPlayer() {
 }
 
 function performAImove() {
-
+	let start = new Date().getTime();
 	let treeRoot = constructStateTree(board, 3);
-	let move = treeRoot.optimalMove;
+	let delta = new Date().getTime() - start;
 
+	console.log("AI move took "+delta+"ms");
+	
+	let move = treeRoot.optimalMove;
 	moveMarble(move.src, move.dest);
 
 	drawCurrentBoardState(board);
