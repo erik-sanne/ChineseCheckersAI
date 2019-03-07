@@ -27,7 +27,7 @@ function createGameboard(boardHeight) {
 			holeLocations.push(t2[i]);
 	}
 
-	let emptyHoles = new Array(holeLocations.length).fill(0);
+	let emptyHoles = new Uint8Array(holeLocations.length).fill(0);
 	let graph = makeGraph(holeLocations, step);
 
 	return {

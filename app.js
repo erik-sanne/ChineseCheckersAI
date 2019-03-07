@@ -160,7 +160,7 @@ function performAImove() {
 	let delta = new Date().getTime() - start;
 
 	console.log("AI move took "+delta+"ms");
-	
+
 	let move = treeRoot.optimalMove;
 	moveMarble(move.src, move.dest);
 

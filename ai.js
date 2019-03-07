@@ -109,7 +109,7 @@ function evaluateState(state, holeLocations, targetIndex) {
 		}
 
 	}
-	
+
 	return scores[HUMAN] - scores[NELLY];
 }
 
@@ -133,7 +133,7 @@ function recAssignScoresToNodes(current, holeLocations, depth) {
 
 		// This is needed if all possible future moves makes the state worse, i.e when enetring the last gole hole with only one move...
 		// However, I have a suspicion that it might not allways risk pervent if all future is worse than one move. So I would like to check
-		// depth > 1 instead to always account for opponent moves, but for some reason we again get problems at end game... Please check into this :) 
+		// depth > 1 instead to always account for opponent moves, but for some reason we again get problems at end game... Please check into this :)
 		if (depth > 0) {
 			optScore = evaluateState(current.state, holeLocations, targetIndex);
 		}
