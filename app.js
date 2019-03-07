@@ -194,20 +194,24 @@ function nextPlayer() {
 
 	if (currentPlayer == NELLY) {
 		setTimeout(function() {
-			performAImove();
+			performAImove(0);
 		}, 100);
 	} else if (ONLYAI) {
 		setTimeout(function() {
-			performAImove();
+			performAImove(1);
 		}, 100);
 	}
 }
 
-function performAImove() {
-
-	let treeRoot = constructStateTree(board, 3, currentPlayer);
+function performAImove(ai) {
+	//Modularize this
+	let treeRoot = constructStateTree(board, 1, currentPlayer);
 	let move = treeRoot.optimalMove;
 
+	if (ai) {
+		treeRoot = ai2.constructStateTree(board, 3, currentPlayer);
+	}
+	
 	moveMarble(move.src, move.dest);
 
 	drawCurrentBoardState(board);
