@@ -156,7 +156,7 @@ function nextPlayer() {
 
 function performAImove() {
 	let start = new Date().getTime();
-	let treeRoot = constructStateTree(board, 3);
+	let treeRoot = constructStateTree(board, 5);
 	let delta = new Date().getTime() - start;
 
 	console.log("AI move took "+delta+"ms");

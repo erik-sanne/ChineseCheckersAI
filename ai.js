@@ -109,6 +109,13 @@ function constructPrunedTree(node, depth, maxDepth, alpha, beta, maximizing){
 
 					let lastMove = {src: i, dest: target};
 
+					// Prune moves that are immediately worse, i.e. not moving towards the target triangle.
+					// TODO: For the last time.... don't hard code this...... (I blame myself /simon)
+					let goalIndex = [120, 90][playerIndex];
+					if (distanceBetweenHoles(target, goalIndex, board) > distanceBetweenHoles(i, goalIndex, board)) {
+						continue;
+					}
+
 					let newState = node.state.slice();
 					newState[i] = 0;
 					newState[target] = player;
@@ -151,6 +158,13 @@ function constructPrunedTree(node, depth, maxDepth, alpha, beta, maximizing){
 				for (let target of calculatePotentialTargets(node.state, i)){
 
 					let lastMove = {src: i, dest: target};
+
+					// Prune moves that are immediately worse, i.e. not moving towards the target triangle.
+					// TODO: For the last time.... don't hard code this...... (I blame myself /simon)
+					let goalIndex = [120, 90][playerIndex];
+					if (distanceBetweenHoles(target, goalIndex, board) > distanceBetweenHoles(i, goalIndex, board)) {
+						continue;
+					}
 
 					let newState = node.state.slice();
 					newState[i] = 0;
