@@ -5,16 +5,15 @@ function constructStateTree(board, maxDepth){
 
 	let root = {
 		state : board.holes,
-		children : [],
-		moves : [],
-		score : undefined,
-		optimalMove : undefined
+		child: undefined,
+		score: undefined,
+		optimalMove: undefined
 	}
 
 	//let tree = iterativelyConstructStateTree(root, maxDepth);
 	//assignScoresToNodes(root, board.holeLocations);
 
-	let maxScore = constructPrunedTree(root, maxDepth, Number.NEGATIVE_INFINITY, Number.POSITIVE_INFINITY, true);
+	let maxScore = constructPrunedTree(root, maxDepth, maxDepth, Number.NEGATIVE_INFINITY, Number.POSITIVE_INFINITY, true);
 	console.log(nodeCount);
 	return root;
 }
@@ -81,70 +80,57 @@ function iterativelyConstructStateTree(root, maxDepth){
 }
 
 //TESTTESTTEST
-function constructPrunedTree(node, depth, alpha, beta, maximizing){
-	if(depth <= 0){
+function constructPrunedTree(node, depth, maxDepth, alpha, beta, maximizing){
 
-		let winState = true;
-		for (let i of [81, 82, 83, 84, 85, 86, 87, 88, 89, 90]) {
-			if (node.state[i] !== NELLY_MARBLE) {
-				winState = false;
-			}
+	let winState = true;
+	for (let i of [81, 82, 83, 84, 85, 86, 87, 88, 89, 90]) {
+		if (node.state[i] !== NELLY_MARBLE) {
+			winState = false;
 		}
+	}
+	if (winState) {
+		let largeNumber = 10000;
+		return largeNumber / (maxDepth - depth);
+	}
 
-		if (winState) {
-			console.log('found win state at depth: '+depth);
-			if(maximizing) {
-				return Number.POSITIVE_INFINITY;
-			} else {
-				return Number.NEGATIVE_INFINITY;
-			}
-		}
-
+	if(depth == 0){
 		return evaluateState(node.state, board.holeLocations, [120,90]);
 	}
 
 	if(maximizing){
-		let value = Number.NEGATIVE_INFINITY;
+
+		var value = Number.NEGATIVE_INFINITY;
 		let playerIndex = 1;
 		let player = playerIndex + 1;
 
 		for(let i = 0; i < node.state.length; i++){
 			if(node.state[i] == player){
 				for (let target of calculatePotentialTargets(node.state, i)){
-					node.moves.push({src: i, dest: target});
+
+					let lastMove = {src: i, dest: target};
 
 					let newState = node.state.slice();
 					newState[i] = 0;
 					newState[target] = player;
 
 					let childNode = {
-						state : newState,
-						children : [],
-						moves : [],
-						score : undefined,
-						optimalMove : undefined
+						state: newState,
+						child: undefined,
+						score: undefined,
+						optimalMove: undefined
 					};
 
-					node.children.push(childNode);
 					nodeCount++;
 
-					let newVal = constructPrunedTree(childNode, depth-1, alpha, beta, false);
+					let newVal = constructPrunedTree(childNode, depth-1, maxDepth, alpha, beta, false);
 					if (newVal > value) {
 						value = newVal;
-						node.optimalMove = node.moves[node.moves.length-1];
+						node.optimalMove = lastMove;
+						node.child = childNode;
 						node.score = value;
 					}
 					alpha = Math.max(alpha, value);
-/*
-					value = Math.max(value, constructPrunedTree(childNode, depth-1, alpha, beta, false));
-					//alpha = Math.max(alpha, value);
 
-					if(value > alpha){
-						node.optimalMove = node.moves[node.moves.length-1];
-						node.score = value;
-						alpha = value;
-					}
-*/
 					if(alpha >= beta){
 						return value; //No need to continue
 					}
@@ -155,50 +141,38 @@ function constructPrunedTree(node, depth, alpha, beta, maximizing){
 		return node.score;
 
 	} else {
+
 		let value = Number.POSITIVE_INFINITY;
 		let playerIndex = 0;
 		let player = playerIndex + 1;
 
-
-
 		for(let i = 0; i < node.state.length; i++){
 			if(node.state[i] == player){
 				for (let target of calculatePotentialTargets(node.state, i)){
-					node.moves.push({src: i, dest: target});
+
+					let lastMove = {src: i, dest: target};
 
 					let newState = node.state.slice();
 					newState[i] = 0;
 					newState[target] = player;
 
 					let childNode = {
-						state : newState,
-						children : [],
-						moves : [],
-						score : undefined,
-						optimalMove : undefined
+						state: newState,
+						child: undefined,
+						score: undefined,
+						optimalMove: undefined
 					};
 
-					node.children.push(childNode);
 					nodeCount++;
 
-					let newVal = constructPrunedTree(childNode, depth-1, alpha, beta, true);
+					let newVal = constructPrunedTree(childNode, depth-1, maxDepth, alpha, beta, true);
 					if (newVal < value) {
-						node.optimalMove = node.moves[node.moves.length-1];
-						node.score = newVal;
 						value = newVal;
+						node.optimalMove = lastMove;
+						node.child = childNode;
+						node.score = newVal;
 					}
-					/*
-					value = Math.min(value, constructPrunedTree(childNode, depth-1, alpha, beta, true));
-
-					if(value < beta){
-						node.optimalMove = node.moves[node.moves.length-1];
-						node.score = value;
-						beta = value;
-					}
-					*/
-
 					beta = Math.min(value, beta);
-
 
 					if(alpha >= beta){
 						return value;
@@ -215,7 +189,7 @@ function constructPrunedTree(node, depth, alpha, beta, maximizing){
 // this function gives a score for the given state
 function evaluateState(state, holeLocations, targetIndex) {
 
-	let scores = [0.0, 0.0];
+	let distances = [0.0, 0.0];
 
 	for (let i = 0; i < state.length; i++) {
 
@@ -236,15 +210,16 @@ function evaluateState(state, holeLocations, targetIndex) {
 		// be clamped down to zero, maybe..? Or something similar so we don't "punish" "valid" holes
 		let dist = Math.sqrt(dx * dx + dy * dy);
 
-		scores[index] += dist;
+		distances[index] += dist;
 
 		if ([81, 82, 83, 84, 85, 86, 87, 88, 89, 90].includes(i)) {
-			scores[index] -= 100;
+			distances[index] -= 100;
 		}
 
 	}
 
-	return scores[HUMAN] - scores[NELLY];
+	let score =  - distances[NELLY];
+	return score;
 }
 
 function assignScoresToNodes(root, holeLocations) {
