@@ -6,16 +6,25 @@ function constructStateTree(board, maxDepth){
 	let root = {
 		state : board.holes,
 		child: undefined,
+		moves: [],
+		children: [],
 		score: undefined,
 		optimalMove: undefined
 	}
 
-	//let tree = iterativelyConstructStateTree(root, maxDepth);
-	//assignScoresToNodes(root, board.holeLocations);
+	let useAlphaBeta = true;
 
-	let maxScore = constructPrunedTree(root, maxDepth, maxDepth, Number.NEGATIVE_INFINITY, Number.POSITIVE_INFINITY, true);
-	console.log(nodeCount);
-	return root;
+	if (useAlphaBeta) {
+		let maxScore = constructPrunedTree(root, maxDepth, maxDepth, Number.NEGATIVE_INFINITY, Number.POSITIVE_INFINITY, true);
+		console.log(nodeCount);
+		return root;
+	} else {
+		let tree = iterativelyConstructStateTree(root, maxDepth);
+		assignScoresToNodes(root, board.holeLocations);
+		console.log(nodeCount);
+		return tree;
+	}
+
 }
 
 function iterativelyConstructStateTree(root, maxDepth){
@@ -223,6 +232,9 @@ function evaluateState(state, holeLocations, targetIndex) {
 		// TODO: If i is a hole that actually is a goal-hole, then the distance should maybe
 		// be clamped down to zero, maybe..? Or something similar so we don't "punish" "valid" holes
 		let dist = Math.sqrt(dx * dx + dy * dy);
+
+		// TODO: Some randomness..?
+		//dist += (Math.random() - 0.5) * 10;
 
 		distances[index] += dist;
 
