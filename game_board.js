@@ -1,28 +1,35 @@
 'use strict';
 
+// Abstract-style base class for game boards. As of now, any game board with hexagonal tiling of even
+// distance can be constructed as a derived class.
 class GameBoard {
 
+	// Construct a game board with hole-to-hole distance (step) and hole size/diameter.
+	// GameBoard should be considered an 'abstract class' and this constructor should
+	// only be called from a derived class that has implemented _createHoleLocations(..),
+	// startHolesForPlayer(p) and goalHolesForPlayer(p).
 	constructor(step, holeSize) {
 
 		this.stepLength = step;
 		this.holeSize = holeSize;
 
-		// _createHoleLocations must be implemented by derived class!
 		this.holeLocations = this._createHoleLocations(step);
 		this.graph = this._constructGraph(this.holeLocations, step);
 
 	}
 
+	// Since zero for a hole means no marble, a one means the first player, i.e. player index zero.
+	// This function simply maps from a marble to a player.
 	static marbleForPlayer(p) {
-		// (since zero for a hole means no marble, a one means the first player, i.e. player index zero)
 		return p + 1;
 	}
 
+	// The same but opposite version of marbleForPlayer.
 	static playerForMarble(x) {
-		// (see function marbleForPlayer for reference)
 		return x - 1;
 	}
 
+	// Modify the given game state with a simple marble swap
 	static moveMarble(gameState, src, dst) {
 		let marble = gameState[src];
 		console.assert(marble != 0);
@@ -30,6 +37,18 @@ class GameBoard {
 		gameState[dst] = marble;
 	}
 
+	// Return true if all of the marbles of player p in gameState are in the goal holes for player p
+	playerHasAllMarblesInGoal(gameState, p) {
+		for (let holeIndex of this.goalHolesForPlayer(p)) {
+			if (gameState[holeIndex] != GameBoard.marbleForPlayer(p)) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	// Returns the euclidian distance between the holes at indices i and j
 	holeDistance(i, j) {
 
 		let h0 = this.holeLocations[i];
@@ -68,7 +87,6 @@ class GameBoard {
 			return;
 		}
 
-		// Recursively add all potential targets that come from jumping over marbles
 		this._recursiveAddJumpTargets(origin, gameState, targets);
 
 		// If empty hole right next to current
@@ -79,7 +97,7 @@ class GameBoard {
 			let neighborHole = gameState[neighbor];
 
 			// Empty hole besides current
-			if (neighborHole == 0 && targets.indexOf(neighbor) == -1) {
+			if (neighborHole == 0 && !targets.includes(neighbor)) {
 				targets.push(neighbor);
 			}
 
@@ -88,6 +106,9 @@ class GameBoard {
 		return targets;
 	}
 
+	// Recursively add all potential targets to the list targets that come from jumping over other marbles.
+	// Since jumping can be repeated (and we clump together all repeated jumps), this recursively finds all
+	// targets that can be jumped to.
 	_recursiveAddJumpTargets(reference, gameState, targets) {
 
 		let neighbors = this.graph[reference];
@@ -101,8 +122,7 @@ class GameBoard {
 				let beyond = this.graph[neighbor][dir];
 				if (gameState[beyond] == 0) {
 
-					// If it hasn't been considered already...
-					if (targets.indexOf(beyond) == -1) {
+					if (!targets.includes(beyond)) {
 						targets.push(beyond);
 						this._recursiveAddJumpTargets(beyond, gameState, targets);
 					}
@@ -113,13 +133,15 @@ class GameBoard {
 
 	}
 
+	// Constructs a graph over the holes on the game board. The structure of the graph is as follows:
+	//
+	// Maps from an index of a hole to a list of neighboring hole indices. Due to the rules of chinese checkers we
+	// need a neighbor list of identical size for all holes, even though the neighbor count can differ. The rule in
+	// question is the jump-over rule, where we need to search the hole just beyond a neighbor in the same direction.
+	// By having a consistent index-direction mapping we can easily and cheaply achieve this. For now we require
+	// hexagonal game boards, so the neighbor count is fixed to 6 and the graph construction is simple.
 	_constructGraph(locations, step) {
 
-		// Maps from an index of a hole to a list of neighboring hole indices. Due to the rules of chinese checkers we
-		// need a neighbor list of identical size for all holes, even though the neighbor count can differ. The rule in
-		// question is the jump-over rule, where we need to search the hole just beyond a neighbor in the same direction.
-		// By having a consistent index-direction mapping we can easily and cheaply achieve this. For now we require
-		// hexagonal game boards, so the neighbor count is fixed to 6 and the graph construction is simple.
 		let graph = [];
 
 		for (let i = 0; i < locations.length; ++i) {
@@ -152,6 +174,5 @@ class GameBoard {
 		return graph;
 
 	}
-
 
 }

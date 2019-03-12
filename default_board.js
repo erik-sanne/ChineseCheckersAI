@@ -1,5 +1,6 @@
 'use strict';
 
+// The default star shaped chinese checkers board.
 class DefaultBoard extends GameBoard {
 
 	constructor(pixelHeight) {
@@ -13,7 +14,10 @@ class DefaultBoard extends GameBoard {
 
 	}
 
-	startHolesForPlayer(i) {
+	// Returns a list of indices for the start location holes for a player p. For now max 2 players are supported
+	startHolesForPlayer(p) {
+
+		console.assert(p >= 0 && p < 2);
 
 		const starts = [
 			[81, 82, 83, 84, 85, 86, 87, 88, 89, 90],
@@ -25,26 +29,43 @@ class DefaultBoard extends GameBoard {
 			[77, 82, 83, 78, 85, 86, 87, 88, 89, 90]
 		];
 
-		return starts[i];
+		return starts[p];
 
 	}
 
-	goalHolesForPlayer(i) {
+	// Returns a list of indices for the goal location holes for a player p. For now max 2 players are supported
+	goalHolesForPlayer(p) {
+
+		console.assert(p >= 0 && p < 2);
 
 		const goals = [
 			[120, 119, 118, 117, 116, 115, 114, 113, 112, 111],
 			[81, 82, 83, 84, 85, 86, 87, 88, 89, 90]
 		]
 
-		return goals[i];
+		return goals[p];
 
 	}
 
-	// Hole location creation stuff
+	// Returns a single index for a hole that is a target location for a player p. This could for example be used
+	// as a target to optimize the distance of marbles to, such as when evaluating a state for minimax.
+	targetLocationIndexForPlayer(p) {
+
+		console.assert(p >= 0 && p < 2);
+
+		// Indices of the tips of the triangles where each player needs to get to
+		const targets = [120, 90];
+
+		return targets[p];
+
+	}
+
+	///////////////////////////////////////
+	// Hole location creation stuff below
 
 	_createHoleLocations(step) {
 
-		// Default star can be seen as two overlayed triangles, one rotated 180 degrees...
+		// Default star can be seen as two overlayed triangles, one rotated 180 degrees
 		let t1 = this._createTriangle(step);
 
 		// Create rotated copy
@@ -57,11 +78,11 @@ class DefaultBoard extends GameBoard {
 		}
 
 		// Add non-overlapping holes from t2 to the list of locations/holes
-		const threshold = 0.5;
+		const overlapThreshold = 0.5;
 
 		let locations = t1;
 		for (let pos of t2) {
-			if (this._canAddPositionToBoard(pos, locations, threshold)) {
+			if (this._canAddPositionToBoard(pos, locations, overlapThreshold)) {
 				locations.push(pos);
 			}
 		}

@@ -3,37 +3,28 @@ var ctx;
 let newBoard;
 let gameState;
 
-var currentlySelected = null;
-var potentialTargets = [];
+let currentlySelected = null;
+let potentialTargets = [];
 
-var currentPlayer = 0;
-var currentPlayerCount = 2;
+let currentPlayer = 0;
+let playerCount = 2;
 
-var players = [
-	{
-		color: '#3C7BE2',
-		name: 'Blue'
-	},
-	{
-		color: '#F8786D',
-		name: 'Red'
-	}
-]
+let searchTreeDepth = 5;
+
+let playerColors = [
+	'#3C7BE2', // blue
+	'#F8786D'  // red
+];
 
 const HUMAN = 0;
 const NELLY = 1;
 
-const HUMAN_MARBLE = 1;
-const NELLY_MARBLE = 2;
 
-
-function init() {
+function initializeGame() {
 
 	let canvas = document.getElementById('canvas');
 	canvas.addEventListener('click', function (e) { onBoardClicked(e); });
 	ctx = canvas.getContext('2d');
-
-	let playerCount = 2;
 
 	newBoard = new DefaultBoard(canvas.height);
 	gameState = newBoard.createInitialState(playerCount);
@@ -44,8 +35,8 @@ function init() {
 function onBoardClicked(e) {
 
 	var rect = e.target.getBoundingClientRect();
-  	var x = e.clientX - rect.left;
-  	var y = e.clientY - rect.top;
+	var x = e.clientX - rect.left;
+	var y = e.clientY - rect.top;
 
 	// TODO: Fix this thing.. It's because of the centering we currently have with the board.
 	x -= canvas.width / 2.0;
@@ -101,8 +92,9 @@ function selectHole(index) {
 	drawCurrentBoardState(gameState);
 }
 
-function onMarbleMoved(){
-	if (checkWinConditionForCurrentPlayer(gameState)) {
+function onMarbleMoved() {
+
+	if (newBoard.playerHasAllMarblesInGoal(gameState, currentPlayer)) {
 		drawCurrentBoardState(gameState);
 		let msg = "Congratulations, you won!";
 		if (currentPlayer == NELLY)
@@ -132,7 +124,7 @@ function checkWinConditionForCurrentPlayer(state) {
 }
 
 function nextPlayer() {
-	currentPlayer = (currentPlayer + 1) % currentPlayerCount;
+	currentPlayer = (currentPlayer + 1) % playerCount;
 
 	if (currentPlayer == NELLY) {
 		setTimeout(function() {
@@ -142,11 +134,12 @@ function nextPlayer() {
 }
 
 function performAImove() {
+
 	let start = new Date().getTime();
-	let treeRoot = constructStateTree(gameState, newBoard, 5);
+	let treeRoot = constructStateTree(gameState, newBoard, searchTreeDepth);
 	let delta = new Date().getTime() - start;
 
-	console.log("AI move took " + delta + "ms");
+	console.log('AI move took ' + delta + 'ms');
 
 	let move = treeRoot.optimalMove;
 	GameBoard.moveMarble(gameState, move.src, move.dest);
@@ -157,7 +150,7 @@ function performAImove() {
 }
 
 function colorForPlayer(playerIndex) {
-	return players[playerIndex].color;
+	return playerColors[playerIndex];
 }
 
 function makeMarbleCirclePath(x, y, size) {
@@ -227,10 +220,10 @@ function drawCurrentBoardState() {
 		}
 
 		// Draw player target hole indicators
-		for (let j = 0; j < players.length; j++){
+		for (let j = 0; j < playerCount; j++){
 			if (state == 0 && newBoard.goalHolesForPlayer(j).includes(i)) {
 				makeMarbleCirclePath(x, y, 4/5 * newBoard.holeSize);
-				ctx.strokeStyle = players[j].color;
+				ctx.strokeStyle = colorForPlayer(j);
 				ctx.lineWidth = 1;
 				ctx.stroke();
 				break;
@@ -256,4 +249,4 @@ function drawCurrentBoardState() {
 
 }
 
-init();
+initializeGame();

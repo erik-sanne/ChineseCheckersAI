@@ -1,16 +1,19 @@
+'use strict';
+
+///////////////////////////////////////////////////////////////
+// Debug stuff for counting nodes and branching factors etc.
 let nodeCount = 0;
 let rounds = 0;
 let branching = 0;
+///////////////////////////////////////////////////////////////
 
 function constructStateTree(gameState, board, maxDepth){
-	//nodeCount = 0;
+
 	rounds++;
 
 	let root = {
 		state : gameState,
 		child: undefined,
-		moves: [],
-		children: [],
 		score: undefined,
 		optimalMove: undefined
 	}
@@ -18,130 +21,69 @@ function constructStateTree(gameState, board, maxDepth){
 	let useAlphaBeta = true;
 
 	if (useAlphaBeta) {
-		let maxScore = constructPrunedTree(root, board, maxDepth, maxDepth, Number.NEGATIVE_INFINITY, Number.POSITIVE_INFINITY, true);
+
+		let alpha = Number.NEGATIVE_INFINITY;
+		let beta = Number.POSITIVE_INFINITY;
+		let maxScore = constructPrunedTree(root, board, maxDepth, maxDepth, alpha, beta, true);
 		console.log("Average nodes: " + (nodeCount/rounds));
 		console.log("Average branching factor: " + (nodeCount/branching));
 		return root;
-	} else {
-		let tree = iterativelyConstructStateTree(root, maxDepth);
-		assignScoresToNodes(root, board.holeLocations);
-		console.log("Average nodes: " + (nodeCount/rounds));
 
+	} else {
+
+		let tree = iterativelyConstructStateTree(root, board, maxDepth);
+		assignScoresToNodes(root, board);
+		console.log("Average nodes: " + (nodeCount/rounds));
 		console.log("Average branching factor: " + (nodeCount/branching));
 		return tree;
+
 	}
 
 }
 
-function iterativelyConstructStateTree(root, maxDepth){
-
-	let queue = new FifoQueue();
-	queue.push({node: root, depth: 0});
-
-	while (queue.length() != 0) {
-		let current = queue.pop();
-
-		if (current.depth >= maxDepth) {
-			continue;
-		}
-
-		let winState = true;
-		for (let i of [81, 82, 83, 84, 85, 86, 87, 88, 89, 90]) {
-			if (current.node.state[i] !== NELLY_MARBLE) {
-				winState = false;
-			}
-		}
-
-		if (winState) {
-			console.log('found win state at depth: '+current.depth);
-			continue;
-		}
-
-		branching++;
-
-		let playerIndex = (current.depth + 1) % 2;
-		let player = playerIndex + 1;
-
-		for(let i = 0; i < current.node.state.length; i++){
-			if(current.node.state[i] == player){
-				for (let target of calculatePotentialTargets(current.node.state, i)){
-					current.node.moves.push({src: i, dest: target});
-
-
-
-					let newState = current.node.state.slice();
-					newState[i] = 0;
-					newState[target] = player;
-
-					let childNode = {
-						state : newState,
-						children : [],
-						moves : [],
-						score : undefined,
-						optimalMove : undefined
-					};
-
-					current.node.children.push(childNode);
-					nodeCount++;
-
-					queue.push({
-						node: childNode,
-						depth: current.depth + 1
-					});
-				}
-			}
-		}
-
-	}
-
-	return root;
-
-}
-
-//TESTTESTTEST
+//
+// TODO: Need cleanup! A lot of redundant code for min vs. max branch.
+//
 function constructPrunedTree(node, board, depth, maxDepth, alpha, beta, maximizing){
 
-	let winState = true;
-	for (let i of [81, 82, 83, 84, 85, 86, 87, 88, 89, 90]) {
-		if (node.state[i] !== NELLY_MARBLE) {
-			winState = false;
-		}
-	}
-	if (winState) {
-		let largeNumber = 10000;
-		return largeNumber / (maxDepth - depth);
+	// TODO: Should we penalize the AI if the human/other player is winning also?
+	if (board.playerHasAllMarblesInGoal(node.state, NELLY)) {
+		// Make sure that win states that can be achieved in a lower amount of moves is rewarded
+		// higher than win states found in other branches at higher depth
+		const largeReward = 10000;
+		return largeReward / (maxDepth - depth);
 	}
 
-	if(depth == 0){
-		return evaluateState(node.state, board.holeLocations, [120,90]);
+	if (depth == 0) {
+		return evaluateState(node.state, board);
 	}
 
 	branching++;
 
-	if(maximizing){
+	if(maximizing) {
 
 		var value = Number.NEGATIVE_INFINITY;
-		let playerIndex = 1;
-		let player = playerIndex + 1;
+		let player = NELLY;
+		let marble = GameBoard.marbleForPlayer(player);
 
 		for(let i = 0; i < node.state.length; i++){
-			if(node.state[i] == player){
+			if(node.state[i] == marble){
 				for (let target of board.getPotentialTargets(node.state, i)) {
 
 					let lastMove = {src: i, dest: target};
 
-
-
-					// Prune moves that are immediately worse, i.e. not moving towards the target triangle.
-					// TODO: For the last time.... don't hard code this...... (I blame myself /simon)
-					let goalIndex = [120, 90][playerIndex];
-					if (board.holeDistance(target, goalIndex) > board.holeDistance(i, goalIndex)) {
+					// Prune moves that move mostly backwards away from the goal. This is not mathematically sound
+					// but we have observed that the non-pruned AI never performs backwards moves, so doing this heavily
+					// reduces the branching factor of the search tree.
+					let goalIndex = board.targetLocationIndexForPlayer(player);
+					let earnedDistance = board.holeDistance(i, goalIndex) - board.holeDistance(target, goalIndex);
+					if (earnedDistance < -0.5 * board.stepLength) {
 						continue;
 					}
 
+					// Make copy of the state and perform the move/swap
 					let newState = node.state.slice();
-					newState[i] = 0;
-					newState[target] = player;
+					GameBoard.moveMarble(newState, i, target);
 
 					let childNode = {
 						state: newState,
@@ -152,7 +94,7 @@ function constructPrunedTree(node, board, depth, maxDepth, alpha, beta, maximizi
 
 					nodeCount++;
 
-					let newVal = constructPrunedTree(childNode, board, depth-1, maxDepth, alpha, beta, false);
+					let newVal = constructPrunedTree(childNode, board, depth - 1, maxDepth, alpha, beta, false);
 					if (newVal > value) {
 						value = newVal;
 						node.optimalMove = lastMove;
@@ -173,26 +115,27 @@ function constructPrunedTree(node, board, depth, maxDepth, alpha, beta, maximizi
 	} else {
 
 		let value = Number.POSITIVE_INFINITY;
-		let playerIndex = 0;
-		let player = playerIndex + 1;
+		let player = HUMAN;
+		let marble = GameBoard.marbleForPlayer(player);
 
 		for(let i = 0; i < node.state.length; i++){
-			if(node.state[i] == player){
+			if(node.state[i] == marble){
 				for (let target of board.getPotentialTargets(node.state, i)) {
 
 					let lastMove = {src: i, dest: target};
 
-
-					// Prune moves that are immediately worse, i.e. not moving towards the target triangle.
-					// TODO: For the last time.... don't hard code this...... (I blame myself /simon)
-					let goalIndex = [120, 90][playerIndex];
-					if (board.holeDistance(target, goalIndex) > board.holeDistance(i, goalIndex)) {
+					// Prune moves that move mostly backwards away from the goal. This is not mathematically sound
+					// but we have observed that the non-pruned AI never performs backwards moves, so doing this heavily
+					// reduces the branching factor of the search tree.
+					let goalIndex = board.targetLocationIndexForPlayer(player);
+					let earnedDistance = board.holeDistance(i, goalIndex) - board.holeDistance(target, goalIndex);
+					if (earnedDistance < -0.5 * board.stepLength) {
 						continue;
 					}
 
+					// Make copy of the state and perform the move/swap
 					let newState = node.state.slice();
-					newState[i] = 0;
-					newState[target] = player;
+					GameBoard.moveMarble(newState, i, target);
 
 					let childNode = {
 						state: newState,
@@ -203,7 +146,7 @@ function constructPrunedTree(node, board, depth, maxDepth, alpha, beta, maximizi
 
 					nodeCount++;
 
-					let newVal = constructPrunedTree(childNode, board, depth-1, maxDepth, alpha, beta, true);
+					let newVal = constructPrunedTree(childNode, board, depth - 1, maxDepth, alpha, beta, true);
 					if (newVal < value) {
 						value = newVal;
 						node.optimalMove = lastMove;
@@ -224,53 +167,115 @@ function constructPrunedTree(node, board, depth, maxDepth, alpha, beta, maximizi
 
 }
 
-// this function gives a score for the given state
-function evaluateState(state, holeLocations, targetIndex) {
+// This function gives a score for the given state of a board. To use for evaluating
+// states in partially evaluated tree minimax searching.
+function evaluateState(gameState, board) {
 
 	let distances = [0.0, 0.0];
 
-	for (let i = 0; i < state.length; i++) {
+	for (let i = 0; i < gameState.length; i++) {
 
-		let marble = state[i];
-		let index = marble - 1;
+		let marble = gameState[i];
+		let player = GameBoard.playerForMarble(marble);
 
-		if (index != 0 && index != 1) {
+		if (player != HUMAN && player != NELLY) {
 			continue;
 		}
 
-		let loc = holeLocations[i];
-		let targetLoc = holeLocations[targetIndex[index]];
+		let loc = board.holeLocations[i];
+		let targetIndex = board.targetLocationIndexForPlayer(player);
+		let targetLoc = board.holeLocations[targetIndex];
 
 		let dx = loc.x - targetLoc.x;
 		let dy = loc.y - targetLoc.y;
 
-		// TODO: If i is a hole that actually is a goal-hole, then the distance should maybe
-		// be clamped down to zero, maybe..? Or something similar so we don't "punish" "valid" holes
-		let dist = Math.sqrt(dx * dx + dy * dy);
+		distances[player] += Math.sqrt(dx * dx + dy * dy);
 
-		// TODO: Some randomness..?
-		//dist += (Math.random() - 0.5) * 10;
+		// TODO: Maybe some randomness..? Probably not mathematically sound, but could add some 'chaos' to the AI?
+		//distances[player] += (Math.random() - 0.5) * 10;
 
-		distances[index] += dist;
+	}
 
-		if ([81, 82, 83, 84, 85, 86, 87, 88, 89, 90].includes(i)) {
-			distances[index] -= 100;
+	// As a minimax score/evaluation for a state we take the difference between the distances each player is towards
+	// winning. This isn't a truly zero sum or constant sum as both distances will generally decrease as a game plays.
+	// However, the maximizing player (NELLY) tries to minimize its own distance, while making sure the minimizing
+	// player (HUMAN, i.e. the human player) doesn't decrease its distance. In essence, it works fine.
+	let score = distances[HUMAN] - distances[NELLY];
+
+	return score;
+}
+
+function iterativelyConstructStateTree(root, board, maxDepth) {
+
+	root.moves = [];
+	root.children = [];
+	root.score = undefined;
+
+	let queue = new FifoQueue();
+	queue.push({node: root, depth: 0});
+
+	while (queue.length() != 0) {
+		let current = queue.pop();
+
+		if (current.depth >= maxDepth) {
+			continue;
+		}
+
+		// Win state here, don't continue along this path!
+		if (board.playerHasAllMarblesInGoal(current.node.state, NELLY)) {
+			console.log('found win state at depth: ' + current.depth);
+			continue;
+		}
+
+		branching++;
+
+		let player = (current.depth + 1) % 2;
+		let marble = GameBoard.marbleForPlayer(player);
+
+		for(let i = 0; i < current.node.state.length; i++){
+			if(current.node.state[i] == marble){
+				for (let target of board.getPotentialTargets(current.node.state, i)) {
+
+					current.node.moves.push({src: i, dest: target});
+
+					// Make copy of the state and perform the move/swap
+					let newState = current.node.state.slice();
+					GameBoard.moveMarble(newState, i, target);
+
+					let childNode = {
+						state : newState,
+						children : [],
+						moves : [],
+						score : undefined,
+						optimalMove : undefined
+					};
+
+					current.node.children.push(childNode);
+					nodeCount++;
+
+					queue.push({
+						node: childNode,
+						depth: current.depth + 1
+					});
+
+				}
+			}
 		}
 
 	}
 
-	let score =  - distances[NELLY];
-	return score;
+	return root;
+
 }
 
-function assignScoresToNodes(root, holeLocations) {
-	recAssignScoresToNodes(root, holeLocations, 0);
+function assignScoresToNodes(root, board) {
+	recAssignScoresToNodes(root, board, 0);
 }
 
-function recAssignScoresToNodes(current, holeLocations, depth) {
-
-	// TODO: Maybe don't hardcode!
-	const targetIndex = [120, 90];
+//
+// TODO: This needs cleanup! A lot of old unused stuff..
+//
+function recAssignScoresToNodes(current, board, depth) {
 
 	let maximize = (depth % 2) == 0;
 
@@ -278,19 +283,21 @@ function recAssignScoresToNodes(current, holeLocations, depth) {
 	let optMove = undefined;
 
 	if (current.children.length == 0) {
-		current.score = evaluateState(current.state, holeLocations, targetIndex);
+
+		current.score = evaluateState(current.state, board);
+
 	} else {
 
 		// This is needed if all possible future moves makes the state worse, i.e when enetring the last gole hole with only one move...
 		// However, I have a suspicion that it might not allways risk pervent if all future is worse than one move. So I would like to check
 		// depth > 1 instead to always account for opponent moves, but for some reason we again get problems at end game... Please check into this :)
 		if (depth > 0) {
-			optScore = evaluateState(current.state, holeLocations, targetIndex);
+			optScore = evaluateState(current.state, board);
 		}
 
 		for (var i = 0; i < current.children.length; i++) {
 			let child = current.children[i];
-			recAssignScoresToNodes(child, holeLocations, depth + 1)
+			recAssignScoresToNodes(child, board, depth + 1)
 			if (maximize && child.score > optScore) {
 				optScore = child.score;
 				optMove = current.moves[i];
