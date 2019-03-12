@@ -45,7 +45,7 @@ class DefaultBoard extends GameBoard {
 	_createHoleLocations(step) {
 
 		// Default star can be seen as two overlayed triangles, one rotated 180 degrees...
-		let t1 = createTriangle(step);
+		let t1 = this._createTriangle(step);
 
 		// Create rotated copy
 		let t2 = [];

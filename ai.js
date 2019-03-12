@@ -2,12 +2,12 @@ let nodeCount = 0;
 let rounds = 0;
 let branching = 0;
 
-function constructStateTree(board, maxDepth){
+function constructStateTree(gameState, board, maxDepth){
 	//nodeCount = 0;
 	rounds++;
 
 	let root = {
-		state : board.holes,
+		state : gameState,
 		child: undefined,
 		moves: [],
 		children: [],
@@ -15,10 +15,10 @@ function constructStateTree(board, maxDepth){
 		optimalMove: undefined
 	}
 
-	let useAlphaBeta = false;
+	let useAlphaBeta = true;
 
 	if (useAlphaBeta) {
-		let maxScore = constructPrunedTree(root, maxDepth, maxDepth, Number.NEGATIVE_INFINITY, Number.POSITIVE_INFINITY, true);
+		let maxScore = constructPrunedTree(root, board, maxDepth, maxDepth, Number.NEGATIVE_INFINITY, Number.POSITIVE_INFINITY, true);
 		console.log("Average nodes: " + (nodeCount/rounds));
 		console.log("Average branching factor: " + (nodeCount/branching));
 		return root;
@@ -99,7 +99,7 @@ function iterativelyConstructStateTree(root, maxDepth){
 }
 
 //TESTTESTTEST
-function constructPrunedTree(node, depth, maxDepth, alpha, beta, maximizing){
+function constructPrunedTree(node, board, depth, maxDepth, alpha, beta, maximizing){
 
 	let winState = true;
 	for (let i of [81, 82, 83, 84, 85, 86, 87, 88, 89, 90]) {
@@ -126,7 +126,7 @@ function constructPrunedTree(node, depth, maxDepth, alpha, beta, maximizing){
 
 		for(let i = 0; i < node.state.length; i++){
 			if(node.state[i] == player){
-				for (let target of calculatePotentialTargets(node.state, i)){
+				for (let target of board.getPotentialTargets(node.state, i)) {
 
 					let lastMove = {src: i, dest: target};
 
@@ -135,7 +135,7 @@ function constructPrunedTree(node, depth, maxDepth, alpha, beta, maximizing){
 					// Prune moves that are immediately worse, i.e. not moving towards the target triangle.
 					// TODO: For the last time.... don't hard code this...... (I blame myself /simon)
 					let goalIndex = [120, 90][playerIndex];
-					if (distanceBetweenHoles(target, goalIndex, board) > distanceBetweenHoles(i, goalIndex, board)) {
+					if (board.holeDistance(target, goalIndex) > board.holeDistance(i, goalIndex)) {
 						continue;
 					}
 
@@ -152,7 +152,7 @@ function constructPrunedTree(node, depth, maxDepth, alpha, beta, maximizing){
 
 					nodeCount++;
 
-					let newVal = constructPrunedTree(childNode, depth-1, maxDepth, alpha, beta, false);
+					let newVal = constructPrunedTree(childNode, board, depth-1, maxDepth, alpha, beta, false);
 					if (newVal > value) {
 						value = newVal;
 						node.optimalMove = lastMove;
@@ -178,7 +178,7 @@ function constructPrunedTree(node, depth, maxDepth, alpha, beta, maximizing){
 
 		for(let i = 0; i < node.state.length; i++){
 			if(node.state[i] == player){
-				for (let target of calculatePotentialTargets(node.state, i)){
+				for (let target of board.getPotentialTargets(node.state, i)) {
 
 					let lastMove = {src: i, dest: target};
 
@@ -186,7 +186,7 @@ function constructPrunedTree(node, depth, maxDepth, alpha, beta, maximizing){
 					// Prune moves that are immediately worse, i.e. not moving towards the target triangle.
 					// TODO: For the last time.... don't hard code this...... (I blame myself /simon)
 					let goalIndex = [120, 90][playerIndex];
-					if (distanceBetweenHoles(target, goalIndex, board) > distanceBetweenHoles(i, goalIndex, board)) {
+					if (board.holeDistance(target, goalIndex) > board.holeDistance(i, goalIndex)) {
 						continue;
 					}
 
@@ -203,7 +203,7 @@ function constructPrunedTree(node, depth, maxDepth, alpha, beta, maximizing){
 
 					nodeCount++;
 
-					let newVal = constructPrunedTree(childNode, depth-1, maxDepth, alpha, beta, true);
+					let newVal = constructPrunedTree(childNode, board, depth-1, maxDepth, alpha, beta, true);
 					if (newVal < value) {
 						value = newVal;
 						node.optimalMove = lastMove;

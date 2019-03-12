@@ -1,7 +1,7 @@
 var ctx;
 
-var board;
-var graph;
+let newBoard;
+let gameState;
 
 var currentlySelected = null;
 var potentialTargets = [];
@@ -12,17 +12,11 @@ var currentPlayerCount = 2;
 var players = [
 	{
 		color: '#3C7BE2',
-		name: 'Blue',
-		startHoles: [81, 82, 83, 84, 85, 86, 87, 88, 89, 90],
-		//startHoles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
-		goalHoles: [120, 119, 118, 117, 116, 115, 114, 113, 112, 111]
+		name: 'Blue'
 	},
 	{
 		color: '#F8786D',
-		name: 'Red',
-		startHoles: [120, 119, 118, 117, 116, 115, 114, 113, 112, 111],
-		//startHoles: [77, 82, 83, 78, 85, 86, 87, 88, 89, 90], //Debug
-		goalHoles: [81, 82, 83, 84, 85, 86, 87, 88, 89, 90]
+		name: 'Red'
 	}
 ]
 
@@ -39,11 +33,12 @@ function init() {
 	canvas.addEventListener('click', function (e) { onBoardClicked(e); });
 	ctx = canvas.getContext('2d');
 
-	board = createGameboard(canvas.height);
-	graph = board.graph;
+	let playerCount = 2;
 
-	fillInInitialPlayerMarbles();
-	drawCurrentBoardState(board);
+	newBoard = new DefaultBoard(canvas.height);
+	gameState = newBoard.createInitialState(playerCount);
+
+	drawCurrentBoardState();
 }
 
 function onBoardClicked(e) {
@@ -56,13 +51,13 @@ function onBoardClicked(e) {
 	x -= canvas.width / 2.0;
 	y -= canvas.height / 2.0;
 
-	for (let i = 0; i < board.holeLocations.length; i++){
+	for (let i = 0; i < newBoard.holeLocations.length; i++){
 
-		let pos = board.holeLocations[i];
+		let pos = newBoard.holeLocations[i];
 		let dx = x - pos.x;
 		let dy = y - pos.y;
 
-		if (Math.sqrt(dx * dx + dy * dy) < board.holeSize) {
+		if (Math.sqrt(dx * dx + dy * dy) < newBoard.holeSize) {
 			selectHole(i);
 			return;
 		}
@@ -74,7 +69,7 @@ function selectHole(index) {
 	//console.log(index);
 	//console.log(board.holeLocations[index]);
 
-	let ownerOfSelected = board.holes[index] - 1;
+	let ownerOfSelected = GameBoard.playerForMarble(gameState[index]);
 
 	if (currentlySelected == index) {
 
@@ -86,7 +81,8 @@ function selectHole(index) {
 
 		// Selecting first marble (must be owned by the current player)
 		currentlySelected = index;
-		potentialTargets = calculatePotentialTargets(board.holes, currentlySelected);
+		potentialTargets = newBoard.getPotentialTargets(gameState, currentlySelected);
+		// calculatePotentialTargets(gameState, currentlySelected);
 
 	} else {
 
@@ -94,26 +90,20 @@ function selectHole(index) {
 		if (targetIndex != -1) {
 
 			// Clicking on a valid target
-			moveMarble(currentlySelected, index);
+			GameBoard.moveMarble(gameState, currentlySelected, index);
+			onMarbleMoved();
 
 			currentlySelected = null;
 			potentialTargets = [];
 		}
 
 	}
-	drawCurrentBoardState(board);
-}
-
-function moveMarble(src, dest){
-	let marble = board.holes[src];
-	board.holes[src] = 0;
-	board.holes[dest] = marble;
-	onMarbleMoved();
+	drawCurrentBoardState(gameState);
 }
 
 function onMarbleMoved(){
-	if (checkWinConditionForCurrentPlayer(board.holes)) {
-		drawCurrentBoardState(board);
+	if (checkWinConditionForCurrentPlayer(gameState)) {
+		drawCurrentBoardState(gameState);
 		let msg = "Congratulations, you won!";
 		if (currentPlayer == NELLY)
 			msg = "You lost!";
@@ -129,13 +119,10 @@ function onMarbleMoved(){
 	nextPlayer();
 }
 
-function checkWinConditionForCurrentPlayer(holes) {
+function checkWinConditionForCurrentPlayer(state) {
 
-	let player = players[currentPlayer];
-	let playerMarble = currentPlayer + 1;
-
-	for (holeIndex of player.goalHoles) {
-		if (holes[holeIndex] != playerMarble) {
+	for (holeIndex of newBoard.goalHolesForPlayer(currentPlayer)) {
+		if (state[holeIndex] != GameBoard.marbleForPlayer(currentPlayer)) {
 			return false;
 		}
 	}
@@ -156,40 +143,31 @@ function nextPlayer() {
 
 function performAImove() {
 	let start = new Date().getTime();
-	let treeRoot = constructStateTree(board, 5);
+	let treeRoot = constructStateTree(gameState, newBoard, 5);
 	let delta = new Date().getTime() - start;
 
-	console.log("AI move took "+delta+"ms");
+	console.log("AI move took " + delta + "ms");
 
 	let move = treeRoot.optimalMove;
-	moveMarble(move.src, move.dest);
+	GameBoard.moveMarble(gameState, move.src, move.dest);
+	onMarbleMoved();
 
-	drawCurrentBoardState(board);
+	drawCurrentBoardState(gameState);
 
-}
-
-function fillInInitialPlayerMarbles() {
-	let count = Math.min(currentPlayerCount, players.length);
-	for (var i = 0; i < count; i++) {
-		let player = players[i];
-		for (holeIndex of player.startHoles) {
-			board.holes[holeIndex] = i + 1
-		}
-	}
 }
 
 function colorForPlayer(playerIndex) {
 	return players[playerIndex].color;
 }
 
-function makeMarbleCirclePath(x, y, board, size) {
+function makeMarbleCirclePath(x, y, size) {
 	ctx.beginPath();
-	let radius = (size) ? size : board.holeSize;
+	let radius = (size) ? size : newBoard.holeSize;
 	ctx.arc(x, y, radius, 0, Math.PI * 2.0, false);
 	ctx.closePath();
 }
 
-function drawCurrentBoardState(board) {
+function drawCurrentBoardState() {
 
 	ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -198,22 +176,22 @@ function drawCurrentBoardState(board) {
 
 	// Draw current player indicator
 	let size = 50;
-	makeMarbleCirclePath(size, size, board, size);
+	makeMarbleCirclePath(size, size, size);
 	ctx.fillStyle = colorForPlayer(currentPlayer);
 	ctx.fill();
 
 	// Draw the graph (as a nice grid in the background)
 	ctx.strokeStyle = "#999";
 	ctx.lineWidth = 2;
-	for (let i = 0; i < board.graph.length; i++) {
-		let p0 = board.holeLocations[i];
-		let connections =  board.graph[i];
+	for (let i = 0; i < newBoard.graph.length; i++) {
+		let p0 = newBoard.holeLocations[i];
+		let connections =  newBoard.graph[i];
 		for (let k = 0; k < connections.length; ++k) {
 			if (connections[k] == -1) {
 				// -1 indicates no edge, so ignore it
 				continue;
 			}
-			let p1 = board.holeLocations[connections[k]];
+			let p1 = newBoard.holeLocations[connections[k]];
 			ctx.beginPath();
 			ctx.moveTo(p0.x + centerX, p0.y + centerY);
 			ctx.lineTo(p1.x + centerX, p1.y + centerY);
@@ -222,18 +200,18 @@ function drawCurrentBoardState(board) {
 		}
 	}
 
-	for (let i = 0; i < board.holeLocations.length; i++){
+	for (let i = 0; i < newBoard.holeLocations.length; i++){
 
-		let point = board.holeLocations[i]
+		let point = newBoard.holeLocations[i]
 		let x = point.x + centerX;
 		let y = point.y + centerY;
 
-		let state = board.holes[i];
+		let state = gameState[i];
 
 		if (state == 0) {
 
 			// No marbles in this hole
-			makeMarbleCirclePath(x, y, board);
+			makeMarbleCirclePath(x, y);
 			ctx.fillStyle = "#ddcccf";
 			ctx.fill();
 
@@ -241,16 +219,17 @@ function drawCurrentBoardState(board) {
 		else {
 
 			// Marble for some player in this hole
-			let player = state - 1;
+			let player = GameBoard.playerForMarble(state);
 			ctx.fillStyle = colorForPlayer(player);
-			makeMarbleCirclePath(x, y, board);
+			makeMarbleCirclePath(x, y);
 			ctx.fill();
 
 		}
 
+		// Draw player target hole indicators
 		for (let j = 0; j < players.length; j++){
-			if (players[j].goalHoles.includes(i) && state == 0){
-				makeMarbleCirclePath(x, y, board, 4*board.holeSize/5);
+			if (state == 0 && newBoard.goalHolesForPlayer(j).includes(i)) {
+				makeMarbleCirclePath(x, y, 4/5 * newBoard.holeSize);
 				ctx.strokeStyle = players[j].color;
 				ctx.lineWidth = 1;
 				ctx.stroke();
@@ -260,15 +239,15 @@ function drawCurrentBoardState(board) {
 
 		// Draw the currently selected hole
 		if (i == currentlySelected) {
-			makeMarbleCirclePath(x, y, board);
+			makeMarbleCirclePath(x, y);
 			ctx.lineWidth = 4;
 			ctx.strokeStyle = "#FFFF99";
 			ctx.stroke();
 		}
 
 		// Draw the potential targets
-		if (potentialTargets.indexOf(i) != -1) {
-			makeMarbleCirclePath(x, y, board);
+		if (potentialTargets.includes(i)) {
+			makeMarbleCirclePath(x, y);
 			ctx.lineWidth = 4;
 			ctx.strokeStyle = "#FFFFFF";
 			ctx.stroke();
