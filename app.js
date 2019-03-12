@@ -14,14 +14,12 @@ var players = [
 		color: '#3C7BE2',
 		name: 'Blue',
 		startHoles: [81, 82, 83, 84, 85, 86, 87, 88, 89, 90],
-		//startHoles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
 		goalHoles: [120, 119, 118, 117, 116, 115, 114, 113, 112, 111]
 	},
 	{
 		color: '#F8786D',
 		name: 'Red',
 		startHoles: [120, 119, 118, 117, 116, 115, 114, 113, 112, 111],
-		//startHoles: [77, 82, 83, 78, 85, 86, 87, 88, 89, 90], //Debug
 		goalHoles: [81, 82, 83, 84, 85, 86, 87, 88, 89, 90]
 	}
 ]
@@ -46,51 +44,6 @@ function init() {
 
 	fillInInitialPlayerMarbles();
 	drawCurrentBoardState(board);
-
-	//let val = evaluateState(board.holes, board.holeLocations, [120, 90]);
-	//console.log(val);
-
-	//let hasher = new HashMap(1000000);
-	//let debugTree = constructStateTree(board, 4, hasher);
-	//console.log(debugTree);
-	//console.log("Node count: " + nodeCount);
-	//console.log("Root score: " + debugTree.score);
-/*
-	document.addEventListener('keydown', function (e) {
-		if (e.keyCode == 32 && currentPlayer == 1) {
-
-			let hasher = new HashMap(1000000);
-			let treeRoot = constructStateTree(board, 4, hasher);
-			let move = treeRoot.optimalMove;
-
-			let marble = board.holes[move.src];
-			board.holes[move.src] = 0;
-			board.holes[move.dest] = marble;
-
-			nextPlayer();
-			drawCurrentBoardState(board);
-
-		}
-	});
-*/
-/*
-	// NOTE: This is just some debug stuff for visualizing!
-	let current = debugTree;
-	document.addEventListener('keydown', function (e) {
-		if (e.keyCode == 32) {
-			board.holes = current.state;
-			drawCurrentBoardState(board);
-			let randomIndex = Math.floor(Math.random() * current.children.length);
-			let randomChild = current.children[randomIndex];
-			if (randomChild !== undefined) {
-				current = randomChild;
-			} else {
-				current = constructStateTree(board, 2, hasher);
-				console.log('done');
-			}
-		}
-	});
-*/
 		
 	if (ONLYAI) {
 		setTimeout(function() {
@@ -124,9 +77,6 @@ function onBoardClicked(e) {
 }
 
 function selectHole(index) {
-
-	//console.log(index);
-	//console.log(board.holeLocations[index]);
 
 	let ownerOfSelected = board.holes[index] - 1;
 

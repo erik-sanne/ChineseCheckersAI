@@ -103,16 +103,6 @@ evaluateState : function evaluateState(state, holeLocations, targetIndex) {
 		let dx = loc.x - targetLoc.x;
 		let dy = loc.y - targetLoc.y;
 
-		//If on row 5 or less, base score only on y
-		/*
-		let abs_dy = Math.abs(dy);
-		let threshold = (Math.sqrt(3)/2) * STEP; 
-		if (abs_dy <= threshold){
-			scores[index] += abs_dy;
-			continue;
-		}
-		*/
-
 		// TODO: If i is a hole that actually is a goal-hole, then the distance should maybe
 		// be clamped down to zero, maybe..? Or something similar so we don't "punish" "valid" holes
 		let dist = Math.sqrt(dx * dx + dy * dy);
@@ -129,9 +119,7 @@ evaluateState : function evaluateState(state, holeLocations, targetIndex) {
 	
 	// (player 1 i.e. computer is MAX)
 	//return scores[1] - scores[0];
-	return scores[0] - scores[1]; // Correct, score = dist, want as low dist as possible.
-								// When maximizing we want larger dist for player 1 to lower score
-	
+	return scores[0] - scores[1];	
 },
 
 assignScoresToNodes : function assignScoresToNodes(root, holeLocations, player) {
@@ -151,11 +139,6 @@ recAssignScoresToNodes : function recAssignScoresToNodes(current, holeLocations,
 	if (current.children.length == 0) {
 		current.score = ai2.evaluateState(current.state, holeLocations, targetIndex, player);
 	} else {
-		/*
-		if (maximize){
-			optScore = evaluateState(current.state, holeLocations, targetIndex);
-		}
-		*/
 
 		for (var i = 0; i < current.children.length; i++) {
 			let child = current.children[i];
