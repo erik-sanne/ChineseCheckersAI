@@ -1,7 +1,10 @@
 let nodeCount = 0;
+let rounds = 0;
+let branching = 0;
 
 function constructStateTree(board, maxDepth){
-	nodeCount = 0;
+	//nodeCount = 0;
+	rounds++;
 
 	let root = {
 		state : board.holes,
@@ -12,16 +15,19 @@ function constructStateTree(board, maxDepth){
 		optimalMove: undefined
 	}
 
-	let useAlphaBeta = true;
+	let useAlphaBeta = false;
 
 	if (useAlphaBeta) {
 		let maxScore = constructPrunedTree(root, maxDepth, maxDepth, Number.NEGATIVE_INFINITY, Number.POSITIVE_INFINITY, true);
-		console.log(nodeCount);
+		console.log("Average nodes: " + (nodeCount/rounds));
+		console.log("Average branching factor: " + (nodeCount/branching));
 		return root;
 	} else {
 		let tree = iterativelyConstructStateTree(root, maxDepth);
 		assignScoresToNodes(root, board.holeLocations);
-		console.log(nodeCount);
+		console.log("Average nodes: " + (nodeCount/rounds));
+
+		console.log("Average branching factor: " + (nodeCount/branching));
 		return tree;
 	}
 
@@ -51,6 +57,8 @@ function iterativelyConstructStateTree(root, maxDepth){
 			continue;
 		}
 
+		branching++;
+
 		let playerIndex = (current.depth + 1) % 2;
 		let player = playerIndex + 1;
 
@@ -58,6 +66,8 @@ function iterativelyConstructStateTree(root, maxDepth){
 			if(current.node.state[i] == player){
 				for (let target of calculatePotentialTargets(current.node.state, i)){
 					current.node.moves.push({src: i, dest: target});
+
+
 
 					let newState = current.node.state.slice();
 					newState[i] = 0;
@@ -106,6 +116,8 @@ function constructPrunedTree(node, depth, maxDepth, alpha, beta, maximizing){
 		return evaluateState(node.state, board.holeLocations, [120,90]);
 	}
 
+	branching++;
+
 	if(maximizing){
 
 		var value = Number.NEGATIVE_INFINITY;
@@ -117,6 +129,8 @@ function constructPrunedTree(node, depth, maxDepth, alpha, beta, maximizing){
 				for (let target of calculatePotentialTargets(node.state, i)){
 
 					let lastMove = {src: i, dest: target};
+
+
 
 					// Prune moves that are immediately worse, i.e. not moving towards the target triangle.
 					// TODO: For the last time.... don't hard code this...... (I blame myself /simon)
@@ -167,6 +181,7 @@ function constructPrunedTree(node, depth, maxDepth, alpha, beta, maximizing){
 				for (let target of calculatePotentialTargets(node.state, i)){
 
 					let lastMove = {src: i, dest: target};
+
 
 					// Prune moves that are immediately worse, i.e. not moving towards the target triangle.
 					// TODO: For the last time.... don't hard code this...... (I blame myself /simon)
