@@ -91,6 +91,12 @@ function init() {
 		}
 	});
 */
+		
+	if (ONLYAI) {
+		setTimeout(function() {
+			performAImove(1);
+		}, 100);
+	}
 
 }
 
@@ -205,12 +211,15 @@ function nextPlayer() {
 
 function performAImove(ai) {
 	//Modularize this
-	let treeRoot = constructStateTree(board, 1, currentPlayer);
-	let move = treeRoot.optimalMove;
+	let treeRoot = undefined;
 
 	if (ai) {
 		treeRoot = ai2.constructStateTree(board, 3, currentPlayer);
+	} else {
+		treeRoot = constructStateTree(board, 5);
 	}
+	
+	let move = treeRoot.optimalMove;
 	
 	moveMarble(move.src, move.dest);
 

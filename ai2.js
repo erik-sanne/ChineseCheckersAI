@@ -119,11 +119,11 @@ evaluateState : function evaluateState(state, holeLocations, targetIndex) {
 
 		scores[index] += dist;
 
-		/*for (let j = 0; j < 10; j++) {
+		for (let j = 0; j < 10; j++) {
 			if (state[targetIndex[index]-j] == marble) {
 				scores[index] -= 100;
 			}
-		}*/
+		}
 	}
 
 	

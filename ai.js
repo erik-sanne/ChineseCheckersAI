@@ -1,23 +1,33 @@
 let nodeCount = 0;
 
-function constructStateTree(board, maxDepth, player){
+function constructStateTree(board, maxDepth){
 	nodeCount = 0;
 
 	let root = {
 		state : board.holes,
-		children : [],
-		moves : [],
-		score : undefined,
-		optimalMove : undefined
+		child: undefined,
+		moves: [],
+		children: [],
+		score: undefined,
+		optimalMove: undefined
 	}
 
-	let tree = iterativelyConstructStateTree(root, maxDepth, player);
-	assignScoresToNodes(root, board.holeLocations, player);
+	let useAlphaBeta = true;
 
-	return tree;
+	if (useAlphaBeta) {
+		let maxScore = constructPrunedTree(root, maxDepth, maxDepth, Number.NEGATIVE_INFINITY, Number.POSITIVE_INFINITY, true);
+		console.log(nodeCount);
+		return root;
+	} else {
+		let tree = iterativelyConstructStateTree(root, maxDepth);
+		assignScoresToNodes(root, board.holeLocations);
+		console.log(nodeCount);
+		return tree;
+	}
+
 }
 
-function iterativelyConstructStateTree(root, maxDepth, playerX){
+function iterativelyConstructStateTree(root, maxDepth){
 
 	let queue = new FifoQueue();
 	queue.push({node: root, depth: 0});
@@ -28,10 +38,10 @@ function iterativelyConstructStateTree(root, maxDepth, playerX){
 		if (current.depth >= maxDepth) {
 			continue;
 		}
-/*
+
 		let winState = true;
 		for (let i of [81, 82, 83, 84, 85, 86, 87, 88, 89, 90]) {
-			if (current.node.state[i] !== 2) {
+			if (current.node.state[i] !== NELLY_MARBLE) {
 				winState = false;
 			}
 		}
@@ -39,9 +49,9 @@ function iterativelyConstructStateTree(root, maxDepth, playerX){
 		if (winState) {
 			console.log('found win state at depth: '+current.depth);
 			continue;
-		} */
-		
-		let playerIndex = (current.depth + playerX) % 2;
+		}
+
+		let playerIndex = (current.depth + 1) % 2;
 		let player = playerIndex + 1;
 
 		for(let i = 0; i < current.node.state.length; i++){
@@ -78,19 +88,137 @@ function iterativelyConstructStateTree(root, maxDepth, playerX){
 
 }
 
-// Players:
-//  index 0 = MIN = human <-- why can index be other values then?
-//  index 1 = MAX = computer
+//TESTTESTTEST
+function constructPrunedTree(node, depth, maxDepth, alpha, beta, maximizing){
+
+	let winState = true;
+	for (let i of [81, 82, 83, 84, 85, 86, 87, 88, 89, 90]) {
+		if (node.state[i] !== NELLY_MARBLE) {
+			winState = false;
+		}
+	}
+	if (winState) {
+		let largeNumber = 10000;
+		return largeNumber / (maxDepth - depth);
+	}
+
+	if(depth == 0){
+		return evaluateState(node.state, board.holeLocations, [120,90]);
+	}
+
+	if(maximizing){
+
+		var value = Number.NEGATIVE_INFINITY;
+		let playerIndex = 1;
+		let player = playerIndex + 1;
+
+		for(let i = 0; i < node.state.length; i++){
+			if(node.state[i] == player){
+				for (let target of calculatePotentialTargets(node.state, i)){
+
+					let lastMove = {src: i, dest: target};
+
+					// Prune moves that are immediately worse, i.e. not moving towards the target triangle.
+					// TODO: For the last time.... don't hard code this...... (I blame myself /simon)
+					let goalIndex = [120, 90][playerIndex];
+					if (distanceBetweenHoles(target, goalIndex, board) > distanceBetweenHoles(i, goalIndex, board)) {
+						continue;
+					}
+
+					let newState = node.state.slice();
+					newState[i] = 0;
+					newState[target] = player;
+
+					let childNode = {
+						state: newState,
+						child: undefined,
+						score: undefined,
+						optimalMove: undefined
+					};
+
+					nodeCount++;
+
+					let newVal = constructPrunedTree(childNode, depth-1, maxDepth, alpha, beta, false);
+					if (newVal > value) {
+						value = newVal;
+						node.optimalMove = lastMove;
+						node.child = childNode;
+						node.score = value;
+					}
+					alpha = Math.max(alpha, value);
+
+					if(alpha >= beta){
+						return value; //No need to continue
+					}
+				}
+			}
+		}
+
+		return node.score;
+
+	} else {
+
+		let value = Number.POSITIVE_INFINITY;
+		let playerIndex = 0;
+		let player = playerIndex + 1;
+
+		for(let i = 0; i < node.state.length; i++){
+			if(node.state[i] == player){
+				for (let target of calculatePotentialTargets(node.state, i)){
+
+					let lastMove = {src: i, dest: target};
+
+					// Prune moves that are immediately worse, i.e. not moving towards the target triangle.
+					// TODO: For the last time.... don't hard code this...... (I blame myself /simon)
+					let goalIndex = [120, 90][playerIndex];
+					if (distanceBetweenHoles(target, goalIndex, board) > distanceBetweenHoles(i, goalIndex, board)) {
+						continue;
+					}
+
+					let newState = node.state.slice();
+					newState[i] = 0;
+					newState[target] = player;
+
+					let childNode = {
+						state: newState,
+						child: undefined,
+						score: undefined,
+						optimalMove: undefined
+					};
+
+					nodeCount++;
+
+					let newVal = constructPrunedTree(childNode, depth-1, maxDepth, alpha, beta, true);
+					if (newVal < value) {
+						value = newVal;
+						node.optimalMove = lastMove;
+						node.child = childNode;
+						node.score = newVal;
+					}
+					beta = Math.min(value, beta);
+
+					if(alpha >= beta){
+						return value;
+					}
+				}
+			}
+		}
+
+		return node.score;
+	}
+
+}
+
 // this function gives a score for the given state
 function evaluateState(state, holeLocations, targetIndex) {
 
-	let scores = [0.0, 0.0];
+	let distances = [0.0, 0.0];
 
 	for (let i = 0; i < state.length; i++) {
 
 		let marble = state[i];
 		let index = marble - 1;
-		
+
 		if (index != 0 && index != 1) {
 			continue;
 		}
@@ -101,59 +229,49 @@ function evaluateState(state, holeLocations, targetIndex) {
 		let dx = loc.x - targetLoc.x;
 		let dy = loc.y - targetLoc.y;
 
-		//If on row 5 or less, base score only on y
-		/*
-		let abs_dy = Math.abs(dy);
-		let threshold = (Math.sqrt(3)/2) * STEP; 
-		if (abs_dy <= threshold){
-			scores[index] += abs_dy;
-			continue;
-		}
-		*/
-
 		// TODO: If i is a hole that actually is a goal-hole, then the distance should maybe
 		// be clamped down to zero, maybe..? Or something similar so we don't "punish" "valid" holes
 		let dist = Math.sqrt(dx * dx + dy * dy);
 
-		scores[index] += dist;
+		// TODO: Some randomness..?
+		//dist += (Math.random() - 0.5) * 10;
 
-		for (let j = 0; j < 10; j++) {
-			if (state[targetIndex[index]-j] == marble) {
-				scores[index] -= 100;
-			}
+		distances[index] += dist;
+
+		if ([81, 82, 83, 84, 85, 86, 87, 88, 89, 90].includes(i)) {
+			distances[index] -= 100;
 		}
+
 	}
 
-	
-	// (player 1 i.e. computer is MAX)
-	//return scores[1] - scores[0];
-	return scores[0] - scores[1]; // Correct, score = dist, want as low dist as possible.
-								// When maximizing we want larger dist for player 1 to lower score
-	
+	let score =  - distances[NELLY];
+	return score;
 }
 
-function assignScoresToNodes(root, holeLocations, player) {
-	recAssignScoresToNodes(root, holeLocations, 0, player);
+function assignScoresToNodes(root, holeLocations) {
+	recAssignScoresToNodes(root, holeLocations, 0);
 }
 
-function recAssignScoresToNodes(current, holeLocations, depth, player) {
+function recAssignScoresToNodes(current, holeLocations, depth) {
 
 	// TODO: Maybe don't hardcode!
 	const targetIndex = [120, 90];
 
-	let maximize = ((depth + player + 1) % 2) == 0;
+	let maximize = (depth % 2) == 0;
 
 	let optScore = (maximize) ? Number.NEGATIVE_INFINITY : Number.POSITIVE_INFINITY;
 	let optMove = undefined;
 
 	if (current.children.length == 0) {
-		current.score = evaluateState(current.state, holeLocations, targetIndex, player);
+		current.score = evaluateState(current.state, holeLocations, targetIndex);
 	} else {
-		/*
-		if (maximize){
+
+		// This is needed if all possible future moves makes the state worse, i.e when enetring the last gole hole with only one move...
+		// However, I have a suspicion that it might not allways risk pervent if all future is worse than one move. So I would like to check
+		// depth > 1 instead to always account for opponent moves, but for some reason we again get problems at end game... Please check into this :)
+		if (depth > 0) {
 			optScore = evaluateState(current.state, holeLocations, targetIndex);
 		}
-		*/
 
 		for (var i = 0; i < current.children.length; i++) {
 			let child = current.children[i];
@@ -170,7 +288,6 @@ function recAssignScoresToNodes(current, holeLocations, depth, player) {
 
 		current.score = optScore;
 		current.optimalMove = optMove;
-
 	}
 
 }

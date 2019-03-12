@@ -65,6 +65,18 @@ function makeGraph(locations, step) {
 	return graph;
 }
 
+function distanceBetweenHoles(i0, i1, board) {
+
+	let h0 = board.holeLocations[i0];
+	let h1 = board.holeLocations[i1];
+
+	let dx = h0.x - h1.x;
+	let dy = h0.y - h1.y;
+
+	return Math.sqrt( dx * dx + dy * dy);
+}
+
+
 function distanceLowerThanThreshold(x1, y1, board, threshold){
 	for (let i = 0; i < board.length; i++){
 		let dx = x1 - board[i].x;
