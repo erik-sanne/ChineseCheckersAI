@@ -3,14 +3,16 @@
 // The default star shaped chinese checkers board.
 class DefaultBoard extends GameBoard {
 
-	constructor(pixelHeight) {
+	// Construct a default game board given a canvas size {x, y}.
+	constructor(canvasSize) {
 
 		// Adjust sizes to fit the board in the given height
 		const approxNumHolesInHeight = 15;
-		let step = pixelHeight / approxNumHolesInHeight;
+		let minSize = Math.min(canvasSize.x, canvasSize.y);
+		let step = minSize / approxNumHolesInHeight;
 		let holeSize = 0.85 * 0.5 * step;
 
-		super(step, holeSize);
+		super(canvasSize, step, holeSize);
 
 	}
 
@@ -85,6 +87,12 @@ class DefaultBoard extends GameBoard {
 			if (this._canAddPositionToBoard(pos, locations, overlapThreshold)) {
 				locations.push(pos);
 			}
+		}
+
+		// Offset locations to center of canvas
+		for (let i = 0; i < locations.length; ++i) {
+			locations[i].x += 0.5 * this.canvasSize.x;
+			locations[i].y += 0.5 * this.canvasSize.y;
 		}
 
 		return locations;

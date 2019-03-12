@@ -24,7 +24,7 @@ function constructStateTree(gameState, board, maxDepth){
 
 		let alpha = Number.NEGATIVE_INFINITY;
 		let beta = Number.POSITIVE_INFINITY;
-		let maxScore = constructPrunedTree(root, board, maxDepth, maxDepth, alpha, beta, true);
+		let maxScore = alphaBetaTreeSearch(root, board, maxDepth, maxDepth, alpha, beta, true);
 		console.log("Average nodes: " + (nodeCount/rounds));
 		console.log("Average branching factor: " + (nodeCount/branching));
 		return root;
@@ -44,14 +44,14 @@ function constructStateTree(gameState, board, maxDepth){
 //
 // TODO: Need cleanup! A lot of redundant code for min vs. max branch.
 //
-function constructPrunedTree(node, board, depth, maxDepth, alpha, beta, maximizing){
+function alphaBetaTreeSearch(node, board, depth, maxDepth, alpha, beta, maximizing){
 
 	// TODO: Should we penalize the AI if the human/other player is winning also?
 	if (board.playerHasAllMarblesInGoal(node.state, NELLY)) {
 		// Make sure that win states that can be achieved in a lower amount of moves is rewarded
 		// higher than win states found in other branches at higher depth
-		const largeReward = 10000;
-		return largeReward / (maxDepth - depth);
+		const largePositiveReward = 10000;
+		return largePositiveReward / (maxDepth - depth);
 	}
 
 	if (depth == 0) {
@@ -94,7 +94,7 @@ function constructPrunedTree(node, board, depth, maxDepth, alpha, beta, maximizi
 
 					nodeCount++;
 
-					let newVal = constructPrunedTree(childNode, board, depth - 1, maxDepth, alpha, beta, false);
+					let newVal = alphaBetaTreeSearch(childNode, board, depth - 1, maxDepth, alpha, beta, false);
 					if (newVal > value) {
 						value = newVal;
 						node.optimalMove = lastMove;
@@ -146,7 +146,7 @@ function constructPrunedTree(node, board, depth, maxDepth, alpha, beta, maximizi
 
 					nodeCount++;
 
-					let newVal = constructPrunedTree(childNode, board, depth - 1, maxDepth, alpha, beta, true);
+					let newVal = alphaBetaTreeSearch(childNode, board, depth - 1, maxDepth, alpha, beta, true);
 					if (newVal < value) {
 						value = newVal;
 						node.optimalMove = lastMove;

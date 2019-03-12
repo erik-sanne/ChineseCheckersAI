@@ -1,6 +1,6 @@
 var ctx;
 
-let newBoard;
+let board;
 let gameState;
 
 let currentlySelected = null;
@@ -26,8 +26,8 @@ function initializeGame() {
 	canvas.addEventListener('click', function (e) { onBoardClicked(e); });
 	ctx = canvas.getContext('2d');
 
-	newBoard = new DefaultBoard(canvas.height);
-	gameState = newBoard.createInitialState(playerCount);
+	board = new DefaultBoard({x: canvas.width, y: canvas.height});
+	gameState = board.createInitialState(playerCount);
 
 	drawCurrentBoardState();
 }
@@ -38,17 +38,13 @@ function onBoardClicked(e) {
 	var x = e.clientX - rect.left;
 	var y = e.clientY - rect.top;
 
-	// TODO: Fix this thing.. It's because of the centering we currently have with the board.
-	x -= canvas.width / 2.0;
-	y -= canvas.height / 2.0;
+	for (let i = 0; i < board.holeLocations.length; i++){
 
-	for (let i = 0; i < newBoard.holeLocations.length; i++){
-
-		let pos = newBoard.holeLocations[i];
+		let pos = board.holeLocations[i];
 		let dx = x - pos.x;
 		let dy = y - pos.y;
 
-		if (Math.sqrt(dx * dx + dy * dy) < newBoard.holeSize) {
+		if (Math.sqrt(dx * dx + dy * dy) < board.holeSize) {
 			selectHole(i);
 			return;
 		}
@@ -72,8 +68,7 @@ function selectHole(index) {
 
 		// Selecting first marble (must be owned by the current player)
 		currentlySelected = index;
-		potentialTargets = newBoard.getPotentialTargets(gameState, currentlySelected);
-		// calculatePotentialTargets(gameState, currentlySelected);
+		potentialTargets = board.getPotentialTargets(gameState, currentlySelected);
 
 	} else {
 
@@ -89,13 +84,14 @@ function selectHole(index) {
 		}
 
 	}
-	drawCurrentBoardState(gameState);
+
+	drawCurrentBoardState();
 }
 
 function onMarbleMoved() {
 
-	if (newBoard.playerHasAllMarblesInGoal(gameState, currentPlayer)) {
-		drawCurrentBoardState(gameState);
+	if (board.playerHasAllMarblesInGoal(gameState, currentPlayer)) {
+		drawCurrentBoardState();
 		let msg = "Congratulations, you won!";
 		if (currentPlayer == NELLY)
 			msg = "You lost!";
@@ -113,7 +109,7 @@ function onMarbleMoved() {
 
 function checkWinConditionForCurrentPlayer(state) {
 
-	for (holeIndex of newBoard.goalHolesForPlayer(currentPlayer)) {
+	for (holeIndex of board.goalHolesForPlayer(currentPlayer)) {
 		if (state[holeIndex] != GameBoard.marbleForPlayer(currentPlayer)) {
 			return false;
 		}
@@ -136,7 +132,7 @@ function nextPlayer() {
 function performAImove() {
 
 	let start = new Date().getTime();
-	let treeRoot = constructStateTree(gameState, newBoard, searchTreeDepth);
+	let treeRoot = constructStateTree(gameState, board, searchTreeDepth);
 	let delta = new Date().getTime() - start;
 
 	console.log('AI move took ' + delta + 'ms');
@@ -145,7 +141,7 @@ function performAImove() {
 	GameBoard.moveMarble(gameState, move.src, move.dest);
 	onMarbleMoved();
 
-	drawCurrentBoardState(gameState);
+	drawCurrentBoardState();
 
 }
 
@@ -155,7 +151,7 @@ function colorForPlayer(playerIndex) {
 
 function makeMarbleCirclePath(x, y, size) {
 	ctx.beginPath();
-	let radius = (size) ? size : newBoard.holeSize;
+	let radius = (size) ? size : board.holeSize;
 	ctx.arc(x, y, radius, 0, Math.PI * 2.0, false);
 	ctx.closePath();
 }
@@ -163,9 +159,6 @@ function makeMarbleCirclePath(x, y, size) {
 function drawCurrentBoardState() {
 
 	ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-	let centerX = canvas.width / 2.0;
-	let centerY = canvas.height / 2.0;
 
 	// Draw current player indicator
 	let size = 50;
@@ -176,28 +169,28 @@ function drawCurrentBoardState() {
 	// Draw the graph (as a nice grid in the background)
 	ctx.strokeStyle = "#999";
 	ctx.lineWidth = 2;
-	for (let i = 0; i < newBoard.graph.length; i++) {
-		let p0 = newBoard.holeLocations[i];
-		let connections =  newBoard.graph[i];
+	for (let i = 0; i < board.graph.length; i++) {
+		let p0 = board.holeLocations[i];
+		let connections =  board.graph[i];
 		for (let k = 0; k < connections.length; ++k) {
 			if (connections[k] == -1) {
 				// -1 indicates no edge, so ignore it
 				continue;
 			}
-			let p1 = newBoard.holeLocations[connections[k]];
+			let p1 = board.holeLocations[connections[k]];
 			ctx.beginPath();
-			ctx.moveTo(p0.x + centerX, p0.y + centerY);
-			ctx.lineTo(p1.x + centerX, p1.y + centerY);
+			ctx.moveTo(p0.x, p0.y);
+			ctx.lineTo(p1.x, p1.y);
 			ctx.closePath();
 			ctx.stroke();
 		}
 	}
 
-	for (let i = 0; i < newBoard.holeLocations.length; i++){
+	for (let i = 0; i < board.holeLocations.length; i++){
 
-		let point = newBoard.holeLocations[i]
-		let x = point.x + centerX;
-		let y = point.y + centerY;
+		let point = board.holeLocations[i]
+		let x = point.x;
+		let y = point.y;
 
 		let state = gameState[i];
 
@@ -221,8 +214,8 @@ function drawCurrentBoardState() {
 
 		// Draw player target hole indicators
 		for (let j = 0; j < playerCount; j++){
-			if (state == 0 && newBoard.goalHolesForPlayer(j).includes(i)) {
-				makeMarbleCirclePath(x, y, 4/5 * newBoard.holeSize);
+			if (state == 0 && board.goalHolesForPlayer(j).includes(i)) {
+				makeMarbleCirclePath(x, y, 4.0 / 5.0 * board.holeSize);
 				ctx.strokeStyle = colorForPlayer(j);
 				ctx.lineWidth = 1;
 				ctx.stroke();

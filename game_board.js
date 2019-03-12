@@ -8,8 +8,9 @@ class GameBoard {
 	// GameBoard should be considered an 'abstract class' and this constructor should
 	// only be called from a derived class that has implemented _createHoleLocations(..),
 	// startHolesForPlayer(p) and goalHolesForPlayer(p).
-	constructor(step, holeSize) {
+	constructor(canvasSize, step, holeSize) {
 
+		this.canvasSize = canvasSize;
 		this.stepLength = step;
 		this.holeSize = holeSize;
 
