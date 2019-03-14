@@ -1,3 +1,5 @@
+'use strict';
+
 var ctx;
 
 let board;
@@ -11,14 +13,9 @@ let playerCount = 2;
 
 let searchTreeDepth = 5;
 
-let playerColors = [
-	'#3C7BE2', // blue
-	'#F8786D'  // red
-];
-
+// Constants for conveniently referring back to a specific player index
 const HUMAN = 0;
 const NELLY = 1;
-
 
 function initializeGame() {
 
@@ -27,9 +24,17 @@ function initializeGame() {
 	ctx = canvas.getContext('2d');
 
 	board = new DefaultBoard({x: canvas.width, y: canvas.height});
+	setupNewGame();
+
+}
+
+function setupNewGame() {
+
 	gameState = board.createInitialState(playerCount);
+	currentPlayer = 0;
 
 	drawCurrentBoardState();
+
 }
 
 function onBoardClicked(e) {
@@ -90,36 +95,28 @@ function selectHole(index) {
 
 function onMarbleMoved() {
 
-	if (board.playerHasAllMarblesInGoal(gameState, currentPlayer)) {
+	setTimeout(function () {
+
 		drawCurrentBoardState();
-		let msg = "Congratulations, you won!";
-		if (currentPlayer == NELLY)
-			msg = "You lost!";
-		msg+="\nRematch?";
-		let rematch = confirm(msg);
 
-		if (rematch)
-			location.reload();
+		if (board.playerHasAllMarblesInGoal(gameState, currentPlayer)) {
 
-		return;
-	}
+			let msg = (currentPlayer == NELLY) ? 'You lost!' : 'Congratulations, you won!';
+			msg += '\n\nRematch?';
 
-	nextPlayer();
-}
+			if (confirm(msg)) {
+				setupNewGame()
+			}
 
-function checkWinConditionForCurrentPlayer(state) {
-
-	for (holeIndex of board.goalHolesForPlayer(currentPlayer)) {
-		if (state[holeIndex] != GameBoard.marbleForPlayer(currentPlayer)) {
-			return false;
+		} else {
+			nextPlayer();
 		}
-	}
 
-	return true;
-
+	}, 100);
 }
 
 function nextPlayer() {
+
 	currentPlayer = (currentPlayer + 1) % playerCount;
 
 	if (currentPlayer == NELLY) {
@@ -127,6 +124,9 @@ function nextPlayer() {
 			performAImove();
 		}, 100);
 	}
+
+	drawCurrentBoardState();
+
 }
 
 function performAImove() {
@@ -141,12 +141,17 @@ function performAImove() {
 	GameBoard.moveMarble(gameState, move.src, move.dest);
 	onMarbleMoved();
 
-	drawCurrentBoardState();
-
 }
 
 function colorForPlayer(playerIndex) {
+
+	let playerColors = [
+		'#3C7BE2', // blue
+		'#F8786D'  // red
+	];
+
 	return playerColors[playerIndex];
+
 }
 
 function makeMarbleCirclePath(x, y, size) {
