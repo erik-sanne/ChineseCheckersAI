@@ -1,6 +1,8 @@
 'use strict';
 
+//
 // The default star shaped chinese checkers board.
+//
 class DefaultBoard extends GameBoard {
 
 	// Construct a default game board given a canvas size {x, y}.

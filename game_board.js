@@ -1,7 +1,14 @@
 'use strict';
 
+//
 // Abstract-style base class for game boards. As of now, any game board with hexagonal tiling of even
 // distance can be constructed as a derived class.
+//
+// It should be noted that there is no mutable state in this class! Calling createInitialState(..)
+// generates and returns the game state in which all in-game state mutation occurs. The game itself
+// is responsible for mutating this state, but helper functions in this class can be used to simplify
+// this process, e.g. moveMarble(..) and checks such as playerHasAllMarblesInGoal(..).
+//
 class GameBoard {
 
 	// Construct a game board with hole-to-hole distance (step) and hole size/diameter.
